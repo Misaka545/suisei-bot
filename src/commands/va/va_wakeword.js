@@ -1,19 +1,32 @@
-const { SlashCommandBuilder } = require("discord.js");
 const { ensureVA } = require("../../utils/vaState");
 
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("va").setDescription("Voice assistant controls")
-    .addSubcommand((sc) =>
-      sc.setName("wakeword").setDescription("Set a wakeword or 'off'")
-        .addStringOption((opt) => opt.setName("word").setDescription("e.g. suisei or 'off'").setRequired(true))),
-  async execute(interaction) {
-    const sub = interaction.options.getSubcommand();
-    if (sub !== "wakeword") return;
-    const va = ensureVA(interaction.guild.id);
-    const word = interaction.options.getString("word");
-    if (word === "off") { va.wakeword = null; return interaction.reply("🔔 Wakeword disabled."); }
-    if (!word || word.length < 2) return interaction.reply("❌ Please provide a wakeword (≥2 chars) or `off`.");
-    va.wakeword = word; return interaction.reply(`🔔 Wakeword set to **${word}**`);
-  },
+const EPHEMERAL_FLAG = 1 << 6;
+
+module.exports = async function handleVaWakeword(interaction) {
+  const guildId = interaction.guild.id;
+  const va = ensureVA(guildId);
+
+  const word = (interaction.options.getString("word") || "").trim();
+
+  if (!word) {
+    return interaction.reply({
+      content: "❌ Vui lòng nhập wakeword (ví dụ: `suisei`) hoặc `off`.",
+      flags: EPHEMERAL_FLAG,
+    });
+  }
+
+  if (word.toLowerCase() === "off") {
+    va.wakeword = null;
+    return interaction.reply("🔔 Wakeword **disabled**.");
+  }
+
+  if (word.length < 2) {
+    return interaction.reply({
+      content: "❌ Wakeword phải có **≥ 2** ký tự.",
+      flags: EPHEMERAL_FLAG,
+    });
+  }
+
+  va.wakeword = word;
+  return interaction.reply(`🔔 Wakeword set to **${word}**`);
 };

@@ -1,14 +1,21 @@
-const { SlashCommandBuilder } = require("discord.js");
 const { ensureVA } = require("../../utils/vaState");
 
-module.exports = {
-  data: new SlashCommandBuilder().setName("va").setDescription("Voice assistant controls")
-    .addSubcommand((sc) => sc.setName("stop").setDescription("Stop voice assistant")),
-  async execute(interaction) {
-    const sub = interaction.options.getSubcommand();
-    if (sub !== "stop") return;
-    const va = ensureVA(interaction.guild.id);
-    va.active = false;
-    return interaction.reply("🛑 Voice Assistant: **OFF**.");
-  },
+const EPHEMERAL_FLAG = 1 << 6;
+
+module.exports = async function handleVaStop(interaction) {
+  const guildId = interaction.guild.id;
+  const va = ensureVA(guildId);
+
+  if (!va.active) {
+    return interaction.reply({
+      content: "ℹ️ Voice Assistant đang **OFF** rồi.",
+      flags: EPHEMERAL_FLAG,
+    });
+  }
+
+  va.active = false;
+  va.processing = false;
+  // (Không rời kênh voice: để nhạc/tts khác vẫn dùng. Nếu muốn rời, gọi disconnectGuild ở musicState.)
+
+  return interaction.reply("🛑 Voice Assistant: **OFF**.");
 };
