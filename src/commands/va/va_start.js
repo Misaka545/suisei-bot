@@ -1,21 +1,25 @@
 // src/commands/va/va_start.js
 const { ChannelType } = require("discord.js");
-const { AudioPlayerStatus, EndBehaviorType } = require("@discordjs/voice");
+const {
+  AudioPlayerStatus,
+  EndBehaviorType,
+  VoiceConnectionStatus,
+} = require("@discordjs/voice");
+const prism = require("prism-media");
+const { Transform } = require("stream");
 
-// Helpers/States/Services bạn đã tách sẵn
+// States / Services (dùng đường dẫn tương đối)
 const { ensureVA } = require("../../utils/vaState");
 const { ensureChat, aiGenerate } = require("../../utils/aiChatState");
 const { ensureMusic, connectIfNeeded } = require("../../utils/musicState");
 const { geminiTranscribe } = require("../../services/geminiService");
 const { ttsResourceFromText } = require("../../services/ttsService");
+const pcmToWav48kMono = require("../../utils/pcmToWav");
 
-// Audio utils (ffmpegPath, prism, …). Có thể bạn gộp chúng trong 1 util.
-const { ffmpegPath, prism } = require("../../utils/audioProcessing");
-
-// Một số tuỳ chọn nhẹ cho pipeline
+// Config nhỏ cho VA
 const EPHEMERAL_FLAG = 1 << 6;
-const WARMUP_FRAMES = 3;      // bỏ vài frame đầu để tránh hư đầu gói
-const HARD_TIMEOUT_MS = 7000; // cứng timeout thu âm 1 lượt nói
+const WARMUP_FRAMES = 3;       // bỏ vài khung đầu để tránh hư dữ liệu
+const HARD_TIMEOUT_MS = 7000;  // cứng timeout cho 1 lượt nói
 
 module.exports = async function handleVaStart(interaction) {
   const guild = interaction.guild;
@@ -23,13 +27,17 @@ module.exports = async function handleVaStart(interaction) {
   const voiceChannel = member?.voice?.channel;
 
   if (!voiceChannel) {
-    return interaction.reply({ content: "❌ Join a voice channel first.", flags: EPHEMERAL_FLAG });
+    return interaction.reply({
+      content: "❌ Join a voice channel first.",
+      flags: EPHEMERAL_FLAG,
+    });
   }
 
-  // Stage channel guard: phải là Speaker (không phải Audience)
+  // Stage channel: phải là Speaker, không phải Audience
   if (voiceChannel.type === ChannelType.GuildStageVoice && member.voice.suppress) {
     return interaction.reply({
-      content: "🎙️ Bạn đang là **Audience** trong Stage. Hãy **Request to Speak** rồi chạy lại `/va start`.",
+      content:
+        "🎙️ Bạn đang là **Audience** trong Stage. Hãy **Request to Speak** rồi chạy lại `/va start`.",
       flags: EPHEMERAL_FLAG,
     });
   }
@@ -43,30 +51,32 @@ module.exports = async function handleVaStart(interaction) {
 
   // Kết nối voice — quan trọng: selfDeaf=false để nhận mic
   const st = await connectIfNeeded(interaction, voiceChannel, { selfDeaf: false });
-  ensureMusic(guild.id); // đảm bảo có state nhạc (để tạm dừng/unpause khi bot nói)
+  ensureMusic(guild.id); // đảm bảo state nhạc để pause/unpause khi bot nói
 
   const receiver = st.connection.receiver;
 
-  // Mỗi lần ai đó bắt đầu nói -> thu và xử lý
+  // Khi có user bắt đầu nói → thu và xử lý
   receiver.speaking.on("start", async (userId) => {
     try {
       if (!va.active || va.processing) return;
       const m = guild.members.cache.get(userId);
       if (!m || m.user.bot) return;
 
-      // Chỉ xử lý người đang gọi lệnh? (tuỳ chọn)
+      // Nếu muốn chỉ nghe người gọi lệnh, mở dòng sau:
       // if (m.id !== interaction.user.id) return;
 
       va.processing = true;
       console.log(`[VA] speaking start from ${m.user.tag} (${userId})`);
 
-      // 1) Opus stream từ Discord -> decode PCM 48k mono
+      // 1) Lấy stream Opus từ Discord → decode về PCM s16le 48k mono
       const opus = receiver.subscribe(userId, {
         end: { behavior: EndBehaviorType.AfterSilence, duration: 1200 },
         autoDestroy: true,
       });
 
-      opus.on("error", (e) => console.warn("[VA] opus stream error:", e?.message || e));
+      opus.on("error", (e) =>
+        console.warn("[VA] opus stream error (recoverable):", e?.message || e)
+      );
 
       const decoder = new prism.opus.Decoder({
         frameSize: 960, // 20ms @ 48k
@@ -75,76 +85,101 @@ module.exports = async function handleVaStart(interaction) {
       });
 
       decoder.on("error", (e) => {
-        // frame hỏng — bỏ qua
-        console.warn("[VA] opus decoder error:", e?.message || e);
+        // frame lỗi → bỏ qua
+        console.warn(
+          "[VA] opus decoder error (corrupted frame skipped):",
+          e?.message || e
+        );
       });
 
       const pcm = opus.pipe(decoder);
 
-      // Bỏ 1 vài khung đầu (warm-up)
-      const { Transform } = require("stream");
+      // Bỏ vài frame đầu (warm-up)
       let warmupLeft = WARMUP_FRAMES;
       const warmupStripper = new Transform({
         transform(chunk, _enc, cb) {
-          if (warmupLeft > 0) { warmupLeft--; return cb(); }
+          if (warmupLeft > 0) {
+            warmupLeft--;
+            return cb();
+          }
           cb(null, chunk);
         },
       });
 
-      // 2) PCM 48k mono -> WAV 16k mono bằng ffmpeg
-      const ff = new prism.FFmpeg({
-        command: ffmpegPath,
-        args: [
-          "-f","s16le","-ar","48000","-ac","1","-i","pipe:0",
-          "-ar","16000","-ac","1","-f","wav","pipe:1","-loglevel","quiet",
-        ],
+      // Thu PCM sau warm-up để đóng gói WAV (không dùng ffmpeg)
+      const pcmAfterWarmStream = pcm.pipe(warmupStripper);
+
+      let framesSeen = 0;
+      let pcmBytes = 0;
+      let pcmAfterWarmBytes = 0;
+      const pcmChunks = [];
+
+      pcm.on("data", (c) => {
+        framesSeen++;
+        pcmBytes += c.length;
+      });
+      pcmAfterWarmStream.on("data", (c) => {
+        pcmAfterWarmBytes += c.length;
+        pcmChunks.push(c);
       });
 
-      ff.on("error", (e) => console.warn("[VA] ffmpeg transcode error:", e?.message || e));
-
-      let pcmBytes = 0, framesSeen = 0;
-      pcm.on("data", (c) => { pcmBytes += c.length; framesSeen++; });
-
-      const wavStream = pcm.pipe(warmupStripper).pipe(ff);
-
-      // HARD TIMEOUT để không treo
+      // HARD TIMEOUT phòng kẹt
       const hardTimeout = setTimeout(() => {
-        console.warn("[VA] hard timeout reached; forcing stream end");
         try { opus.destroy(); } catch {}
         try { pcm.destroy(); } catch {}
-        try { warmupStripper.destroy(); } catch {}
-        try { ff.destroy(); } catch {}
+        try { pcmAfterWarmStream.destroy(); } catch {}
       }, HARD_TIMEOUT_MS);
 
-      // Thu WAV buffer
-      const wav = await new Promise((resolve, reject) => {
-        const chunks = [];
-        wavStream.on("data", (c) => chunks.push(c));
-        wavStream.on("error", reject);
-        wavStream.on("end", () => resolve(Buffer.concat(chunks)));
+      // Đợi kết thúc nói (sau 1.2s im lặng)
+      await new Promise((resolve) => {
+        const done = () => resolve();
+        pcmAfterWarmStream.on("end", done);
+        pcmAfterWarmStream.on("close", done);
+        pcmAfterWarmStream.on("error", done);
+        opus.on("end", done);
+        opus.on("close", done);
+        opus.on("error", done);
       }).finally(() => clearTimeout(hardTimeout));
 
-      const wavBytes = wav?.length || 0;
-      console.log(`[VA] frames=${framesSeen} | PCM bytes=${pcmBytes} | WAV bytes=${wavBytes}`);
+      // Gói WAV trực tiếp từ PCM s16le 48k mono
+      const pcmBuffer = Buffer.concat(pcmChunks);
+      const wav = pcmBuffer.length ? pcmToWav48kMono(pcmBuffer) : Buffer.alloc(0);
+      const wavBytes = wav.length;
 
-      if (!pcmBytes || wavBytes < 2000) {
+      console.log(
+        `[VA] frames=${framesSeen} | PCM bytes=${pcmBytes} | PCM(after warmup)=${pcmAfterWarmBytes} | WAV bytes=${wavBytes}`
+      );
+
+      if (!pcmAfterWarmBytes || wavBytes < 2000) {
         va.processing = false;
-        await interaction.followUp({
-          content: "⚠️ VA không nhận được âm thanh. Kiểm tra quyền mic / nói gần hơn / tắt server deafen.",
-          flags: EPHEMERAL_FLAG,
-        }).catch(() => {});
+        await interaction
+          .followUp({
+            content:
+              "⚠️ VA không nhận được âm thanh. (PCM OK nhưng WAV rỗng – đã bỏ ffmpeg) Hãy thử nói gần mic hơn hoặc kiểm tra thiết bị ghi âm.",
+            flags: EPHEMERAL_FLAG,
+          })
+          .catch(() => {});
         return;
       }
 
-      // 3) STT (Gemini)
+      // 2) STT (Gemini)
       let transcript = "";
       try {
         transcript = await geminiTranscribe(wav);
-        console.log(`[VA] transcript="${(transcript || "").slice(0, 120)}${(transcript || "").length > 120 ? "..." : ""}"`);
+        console.log(
+          `[VA] transcript="${(transcript || "").slice(0, 120)}${
+            (transcript || "").length > 120 ? "..." : ""
+          }"`
+        );
       } catch (e) {
         console.error("[VA] STT error:", e);
         va.processing = false;
-        await interaction.followUp({ content: "❌ Lỗi nhận diện giọng nói (STT).", flags: EPHEMERAL_FLAG }).catch(() => {});
+        await interaction
+          .followUp({
+            content: "❌ Lỗi nhận diện giọng nói (STT).",
+            flags: EPHEMERAL_FLAG,
+          })
+          .catch(() => {});
         return;
       }
 
@@ -153,8 +188,11 @@ module.exports = async function handleVaStart(interaction) {
         return;
       }
 
-      // 4) Wakeword (nếu có)
-      if (va.wakeword && !transcript.toLowerCase().includes(va.wakeword.toLowerCase())) {
+      // 3) Wakeword (nếu có)
+      if (
+        va.wakeword &&
+        !transcript.toLowerCase().includes(va.wakeword.toLowerCase())
+      ) {
         console.log("[VA] wakeword not found, ignore");
         va.processing = false;
         return;
@@ -164,40 +202,78 @@ module.exports = async function handleVaStart(interaction) {
         transcript = transcript.replace(re, "").trim();
       }
 
-      // 5) LLM (Gemini) — hội thoại theo kênh
+      // 4) LLM (Gemini) — hội thoại theo kênh
       const session = ensureChat(interaction.channelId);
       let replyText = "";
       try {
         replyText = await aiGenerate(session, transcript);
-        console.log(`[VA] reply="${replyText.slice(0, 120)}${replyText.length > 120 ? "..." : ""}"`);
+        console.log(
+          `[VA] reply="${replyText.slice(0, 120)}${
+            replyText.length > 120 ? "..." : ""
+          }"`
+        );
       } catch (e) {
         console.error("[VA] LLM error:", e);
         va.processing = false;
-        await interaction.followUp({ content: "❌ Lỗi AI tạo câu trả lời.", flags: EPHEMERAL_FLAG }).catch(() => {});
+        await interaction
+          .followUp({
+            content: "❌ Lỗi AI tạo câu trả lời.",
+            flags: EPHEMERAL_FLAG,
+          })
+          .catch(() => {});
         return;
       }
 
-      // 6) TTS & phát — tạm dừng nhạc nếu đang phát
+      // 5) TTS & phát — tạm dừng nhạc nếu đang phát
       const stNow = ensureMusic(guild.id);
       const pausedForVA =
-        stNow?.player && stNow.player.state.status === AudioPlayerStatus.Playing
+        stNow?.player &&
+        stNow.player.state.status === AudioPlayerStatus.Playing
           ? stNow.player.pause(true)
           : false;
 
-      try {
-        const ttsRes = await ttsResourceFromText(replyText, va.lang);
-        st.player.play(ttsRes);
-      } catch (e) {
-        console.error("[VA] TTS error:", e);
-        await interaction.followUp({ content: `🗨️ ${replyText}`, flags: EPHEMERAL_FLAG }).catch(() => {});
+      // Không phát nếu connection không Ready
+      const isConnReady =
+        st.connection &&
+        st.connection.state &&
+        st.connection.state.status === VoiceConnectionStatus.Ready;
+
+      if (!isConnReady || !st.player) {
+        console.warn("[VA TTS] Connection not Ready or player missing; skip play.");
+        await interaction
+          .followUp({
+            content: `🗨️ ${replyText}`,
+            flags: EPHEMERAL_FLAG,
+          })
+          .catch(() => {});
         if (pausedForVA) stNow?.player?.unpause();
         va.processing = false;
         return;
       }
 
-      // Khi TTS xong -> unpause nhạc + sẵn sàng lượt nói mới
+      // Gắn handler lỗi tạm thời cho player (tránh crash EPIPE)
+      const onPlayerError = (err) => {
+        console.warn("[VA TTS] AudioPlayer error:", err?.message || err);
+      };
+      st.player.on("error", onPlayerError);
+
+      try {
+        const ttsRes = await ttsResourceFromText(replyText, va.lang || "auto");
+        st.player.play(ttsRes);
+      } catch (e) {
+        console.error("[VA] TTS error:", e);
+        await interaction
+          .followUp({ content: `🗨️ ${replyText}`, flags: EPHEMERAL_FLAG })
+          .catch(() => {});
+        if (pausedForVA) stNow?.player?.unpause();
+        st.player.off("error", onPlayerError);
+        va.processing = false;
+        return;
+      }
+
       const onIdle = () => {
         st.player.off(AudioPlayerStatus.Idle, onIdle);
+        st.player.off("error", onPlayerError);
         if (pausedForVA) stNow?.player?.unpause();
         va.processing = false;
         console.log("[VA] TTS finished");
@@ -206,7 +282,9 @@ module.exports = async function handleVaStart(interaction) {
     } catch (e) {
       console.error("[VA] pipeline error:", e);
       va.processing = false;
-      await interaction.followUp({ content: "⚠️ VA pipeline error.", flags: EPHEMERAL_FLAG }).catch(() => {});
+      await interaction
+        .followUp({ content: "⚠️ VA pipeline error.", flags: EPHEMERAL_FLAG })
+        .catch(() => {});
     }
   });
 };
