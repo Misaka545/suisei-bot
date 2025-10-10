@@ -1,5 +1,5 @@
 # Use a Node.js base image (adjust version as needed)
-FROM node:18-slim-bullseye 
+FROM node:18-slim
 
 # Install ffmpeg during the Docker build
 RUN apt-get update -y && apt-get install -y ffmpeg
