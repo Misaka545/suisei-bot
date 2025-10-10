@@ -44,7 +44,7 @@ module.exports = {
         .setDescription("Choose dealer's difficulty")
         .setRequired(false) // Make it optional, default to random if not chosen
         .addChoices(
-          { name: "Easy (Dealer stands on 17)", value: "easy" },
+          { name: "Easy (Dealer stands on 20)", value: "easy" },
           { name: "Hard (Dealer stands on 18)", value: "hard" }
         )
     ),

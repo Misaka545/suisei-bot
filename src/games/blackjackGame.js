@@ -140,7 +140,7 @@ class BlackjackGame {
   standPlayer() {
     let standThreshold;
     if (this.dealerStrategy === "easy") {
-      standThreshold = 17; // Dealer hits on 16 or less, stands on 17 or more
+      standThreshold = 20; // Dealer hits on 19 or less, stands on 20 or more
     } else { // "hard" strategy
       standThreshold = 18; // Dealer hits on 17 or less, stands on 18 or more
     }
