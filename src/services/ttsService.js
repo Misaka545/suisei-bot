@@ -89,6 +89,8 @@ function buildPcm48kS16le(readable, tag = "tts") {
 
   const ff = spawn(ffmpegExecutable, ffmpegArgs, {
     stdio: ['pipe', 'pipe', 'inherit'], // Use 'inherit' for stderr to see FFmpeg's errors directly
+    windowsHide: true,                  
+    detached: true,  
   });
 
   ff.on('error', (err) => {
