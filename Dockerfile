@@ -1,9 +1,10 @@
-# Use a Node.js base image (upgraded to 20 to meet engine requirements)
-FROM node:20-slim
+# Use a Node.js base image (upgraded to 22 to meet engine requirements for @discordjs/voice)
+FROM node:22-slim
 
-# Install ffmpeg and python3 (including pip for yt-dlp-exec requirements) during the Docker build
+# Install ffmpeg, python3, python3-pip, and create a symlink for 'python'
 RUN apt-get update -y && \
     apt-get install -y ffmpeg python3 python3-pip && \
+    ln -s /usr/bin/python3 /usr/local/bin/python && \
     rm -rf /var/lib/apt/lists/* # Clean up apt cache to keep image size down
 
 # Set working directory
@@ -23,7 +24,6 @@ COPY . .
 
 # Expose the port your app runs on
 EXPOSE 3000 
-# Change to your app's port if different
 
 # Command to run the application
 CMD ["npm", "start"]
