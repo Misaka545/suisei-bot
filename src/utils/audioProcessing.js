@@ -4,7 +4,7 @@ const fs = require("fs");   // fs module is useful for checking if a path exists
 
 // --- Start of FFmpeg Path Configuration ---
 // This is the crucial part that was missing or incorrect.
-let _ffmpegPath = 'C:\\ffmpeg\\ffmpeg-8.0-full_build\\bin\\ffmpeg.exe';
+let _ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg'; // Default to 'ffmpeg' assuming it's in PATH, allow override
 // On Windows, if FFmpeg is in your system's PATH, 'ffmpeg' is usually enough.
 // If you want to specify a full path (e.g., if ffmpeg.exe is in a specific folder
 // and not in your PATH), you would set process.env.FFMPEG_PATH or hardcode it here.
@@ -17,11 +17,19 @@ console.log(`[FFmpeg] Using command: ${_ffmpegPath}`);
 
 function getFfmpegPath() {
   // Add a check to confirm existence
-  if (!fs.existsSync(_ffmpegPath)) {
-    console.error(`[FFmpeg] ERROR: Configured FFmpeg path does not exist: ${_ffmpegPath}`);
-    return null; // Or throw an error immediately
+  if (_ffmpegPath === 'ffmpeg') {
+    // If we're relying on 'ffmpeg' being in PATH, we can't use fs.existsSync directly
+    // to validate 'ffmpeg' itself, only if _ffmpegPath was an absolute path.
+    // For simplicity, we'll return 'ffmpeg' and let spawn handle ENOENT if not found.
+    return 'ffmpeg';
+  } else {
+    // If FFMPEG_PATH is set to an explicit path (e.g., /usr/bin/ffmpeg or /app/bin/ffmpeg)
+    if (!fs.existsSync(_ffmpegPath)) {
+      console.error(`[FFmpeg] ERROR: Configured FFmpeg path does not exist: ${_ffmpegPath}`);
+      return null;
+    }
+    return _ffmpegPath;
   }
-  return _ffmpegPath;
 }
 // --- End of FFmpeg Path Configuration ---
 
