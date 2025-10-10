@@ -3,9 +3,9 @@ const { createAudioResource, StreamType } = require("@discordjs/voice");
 const ytdlp = require("yt-dlp-exec");
 
 const YTDLP_HEADERS = ["User-Agent: Mozilla/5.0", "Accept-Language: en-US,en;q=0.9"];
-const YTDLP_RATE = "3M";
-const PREFETCH_MS = 600;
-const PREFETCH_BYTES = 1 * 1024 * 1024;
+const YTDLP_RATE = "2M";
+const PREFETCH_MS = 6000;
+const PREFETCH_BYTES = 2* 1024 * 1024;
 const RESOURCE_HWM = 1 << 25;
 
 function makeYtdlpResource(input) {
