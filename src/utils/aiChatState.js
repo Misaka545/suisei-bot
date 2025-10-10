@@ -18,6 +18,7 @@ function ensureChat(channelId) {
       memory: [],
       model: DEFAULT_GEMINI_MODEL,
       history: [],
+      lang: "auto", 
     };
     chatSessions.set(channelId, s);
   }
