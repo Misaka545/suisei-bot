@@ -130,27 +130,43 @@ class BlackjackGame {
   }
 
   hitPlayer() {
-    this.playerHand.addCard(this.deck.deal());
-    if (this.playerHand.isBust()) {
-      this.status = "dealer_win";
+    // Auto-hit until player's score > 16
+    while (this.playerHand.getScore() <= 16) {
+      this.playerHand.addCard(this.deck.deal());
     }
+
+    // If player busts (>21), dealer still hits until >16
+    if (this.playerHand.isBust()) {
+      while (this.dealerHand.getScore() <= 16) {
+        this.dealerHand.addCard(this.deck.deal());
+      }
+      // Both bust => draw
+      if (this.dealerHand.isBust()) {
+        this.status = "push";
+      } else {
+        this.status = "dealer_win";
+      }
+    }
+
     return this.status;
   }
 
   standPlayer() {
-    let standThreshold;
-    if (this.dealerStrategy === "easy") {
-      standThreshold = 20; // Dealer hits on 19 or less, stands on 20 or more
-    } else { // "hard" strategy
-      standThreshold = 18; // Dealer hits on 17 or less, stands on 18 or more
+    // If player tries to stand with <=16, force auto-hits until >16
+    while (this.playerHand.getScore() <= 16) {
+      this.playerHand.addCard(this.deck.deal());
     }
-
-    while (this.dealerHand.getScore() < standThreshold) {
+    // Dealer must hit until score > 16 (ignores strategy thresholds)
+    while (this.dealerHand.getScore() <= 16) {
       this.dealerHand.addCard(this.deck.deal());
     }
 
-    if (this.dealerHand.isBust()) {
+    if (this.dealerHand.isBust() && this.playerHand.isBust()) {
+      this.status = "push"; // both bust
+    } else if (this.dealerHand.isBust()) {
       this.status = "player_win";
+    } else if (this.playerHand.isBust()) {
+      this.status = "dealer_win";
     } else if (this.playerHand.getScore() > this.dealerHand.getScore()) {
       this.status = "player_win";
     } else if (this.playerHand.getScore() < this.dealerHand.getScore()) {
