@@ -18,6 +18,7 @@ function ensureUser(userId) {
       },
       guarantee: {
         character_featured: false,
+        weapon_featured: true,
       }
     });
   }

@@ -47,7 +47,7 @@
   "weapons": [
     { "id": 1001, "name": "Lux & Umbra", "rarity": 5, "type": "Limited" },
 
-    { "id": 2001, "name": "Emerald of Genesis", "rarity": 5, "type": "Standard" },
+    { "id": 2001, "name": "Emerald of Genesis", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/4/4b/Weapon_Lux_%26_Umbra.png/revision/latest?cb=20251006191518" },
     { "id": 2002, "name": "Lustrous Razor", "rarity": 5, "type": "Standard" },
     { "id": 2003, "name": "Abyss Surges", "rarity": 5, "type": "Standard" },
     { "id": 2004, "name": "Static Mist", "rarity": 5, "type": "Standard" },
