@@ -1,8 +1,8 @@
 {
   "rarities": {
-    "5": { "name": "5-Star", "color": "#FFB13A", "emoji": "⭐⭐⭐⭐⭐" },
-    "4": { "name": "4-Star", "color": "#A069FF", "emoji": "⭐⭐⭐⭐" },
-    "3": { "name": "3-Star", "color": "#639FFF", "emoji": "⭐⭐⭐" }
+  "5": { "name": "5-Star", "color": "#FFB13A", "lineColor": "#D9A44E", "emoji": "⭐⭐⭐⭐⭐" },
+  "4": { "name": "4-Star", "color": "#A069FF", "lineColor": "#9956D4", "emoji": "⭐⭐⭐⭐" },
+  "3": { "name": "3-Star", "color": "#639FFF", "lineColor": "#4983BF", "emoji": "⭐⭐⭐" }
   },
   "rates": {
     "character": { "5": 0.008, "4": 0.06, "3": 0.932 },
@@ -13,108 +13,91 @@
     "four_star": 10
   },
   "soft_pity": {
-    "character": {
-      "start_at_pity": 74,
-      "rate_increase": 0.08
-    },
-    "weapon": {
-      "start_at_pity": 74,
-      "rate_increase": 0.08
-    }
+    "character": { "start_at_pity": 74, "rate_increase": 0.08 },
+    "weapon": { "start_at_pity": 74, "rate_increase": 0.08 }
   },
   "resonators": [
-    { "id": 101, "name": "Galbrena", "rarity": 5, "type": "Limited", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/c/c9/Galbrena_Splash_Art.png/revision/latest/scale-to-width-down/1000?cb=20250926180902", "voice_line_id": "galbrena" },
-    
-    { "id": 201, "name": "Calcharo", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/8/8a/Calcharo_Splash_Art.png/revision/latest/scale-to-width-down/1000?cb=20241001061902", "voice_line_id": "calcharo" },
-    { "id": 202, "name": "Verina", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/b/b1/Verina_Splash_Art.png/revision/latest/scale-to-width-down/1000?cb=20241001062018", "voice_line_id": "verina" },
-    { "id": 203, "name": "Encore", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/7/79/Encore_Splash_Art.png/revision/latest/scale-to-width-down/1000?cb=20241001062336", "voice_line_id": "encore" },
-    { "id": 204, "name": "Jianxin", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/f/ff/Jianxin_Splash_Art.png/revision/latest/scale-to-width-down/1000?cb=20241001062219", "voice_line_id": "jianxin" },
-    { "id": 205, "name": "Lingyang", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/a/ad/Lingyang_Splash_Art.png/revision/latest/scale-to-width-down/1000?cb=20241001061635", "voice_line_id": "lingyang" },
+    { "id": 101, "name": "Galbrena", "rarity": 5, "type": "Limited", "image": "101.png" },
 
-    { "id": 301, "name": "Danjin", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/3/3e/Danjin_Card.png/revision/latest/scale-to-width-down/1000?cb=20240607110406" },
-    { "id": 302, "name": "Sanhua", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/5/5d/Sanhua_Card.png/revision/latest?cb=20240814180016" },
-    { "id": 303, "name": "Mortefi", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/8/8e/Mortefi_Card.jpg/revision/latest/scale-to-width-down/1000?cb=20231221180030" },
-    { "id": 304, "name": "Taoqi", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/a/ae/Taoqi_Card.jpg/revision/latest/scale-to-width-down/1000?cb=20231219185115" },
-    { "id": 305, "name": "Aalto", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/6/65/Aalto_Card.jpg/revision/latest?cb=20231221174300" },
-    { "id": 306, "name": "Yuanwu", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/0/02/Yuanwu_.jpg/revision/latest/scale-to-width-down/1000?cb=20231221175828" },
-    { "id": 307, "name": "Lumi", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/e/ee/Lumi_Card.jpg/revision/latest?cb=20251017214618" },
-    { "id": 308, "name": "Chixia", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/d/da/Chixia_Card.png/revision/latest/scale-to-width-down/1000?cb=20240703175137" },
-    { "id": 309, "name": "Youhu", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/b/b6/Youhu_Card.png/revision/latest?cb=20240813132555" },
-    { "id": 310, "name": "Baizhi", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/e/ed/Baizhi_Card.png/revision/latest?cb=20240608100732" },
-    { "id": 311, "name": "Yangyang", "rarity": 4, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/a/a7/Yangyang_Card.png/revision/latest?cb=20240813182233" }
+    { "id": 201, "name": "Calcharo", "rarity": 5, "type": "Standard", "image": "201.png" },
+    { "id": 202, "name": "Verina", "rarity": 5, "type": "Standard", "image": "202.png" },
+    { "id": 203, "name": "Encore", "rarity": 5, "type": "Standard", "image": "203.png" },
+    { "id": 204, "name": "Jianxin", "rarity": 5, "type": "Standard", "image": "204.png"},
+    { "id": 205, "name": "Lingyang", "rarity": 5, "type": "Standard", "image": "205.png"},
 
+    { "id": 301, "name": "Danjin", "rarity": 4, "type": "Standard", "image": "301.png" },
+    { "id": 302, "name": "Sanhua", "rarity": 4, "type": "Standard", "image": "302.png" },
+    { "id": 303, "name": "Mortefi", "rarity": 4, "type": "Standard", "image": "303.png" },
+    { "id": 304, "name": "Taoqi", "rarity": 4, "type": "Standard", "image": "304.png" },
+    { "id": 305, "name": "Aalto", "rarity": 4, "type": "Standard", "image": "305.png" },
+    { "id": 306, "name": "Yuanwu", "rarity": 4, "type": "Standard", "image": "306.png" },
+    { "id": 307, "name": "Lumi", "rarity": 4, "type": "Standard", "image": "307.png" },
+    { "id": 308, "name": "Chixia", "rarity": 4, "type": "Standard", "image": "308.png" },
+    { "id": 309, "name": "Youhu", "rarity": 4, "type": "Standard", "image": "309.png" },
+    { "id": 310, "name": "Baizhi", "rarity": 4, "type": "Standard", "image": "310.png" },
+    { "id": 311, "name": "Yangyang", "rarity": 4, "type": "Standard", "image": "311.png" }
   ],
   "weapons": [
-    { "id": 1001, "name": "Lux & Umbra", "rarity": 5, "type": "Limited" },
+    { "id": 1001, "name": "Lux & Umbra", "rarity": 5, "type": "Limited", "image": "1001.png" },
 
-    { "id": 2001, "name": "Emerald of Genesis", "rarity": 5, "type": "Standard", "image": "https://static.wikia.nocookie.net/wutheringwaves/images/4/4b/Weapon_Lux_%26_Umbra.png/revision/latest?cb=20251006191518" },
-    { "id": 2002, "name": "Lustrous Razor", "rarity": 5, "type": "Standard" },
-    { "id": 2003, "name": "Abyss Surges", "rarity": 5, "type": "Standard" },
-    { "id": 2004, "name": "Static Mist", "rarity": 5, "type": "Standard" },
-    { "id": 2005, "name": "Cosmic Ripples", "rarity": 5, "type": "Standard" },
+    { "id": 2001, "name": "Emerald of Genesis", "rarity": 5, "type": "Standard", "image": "2001.png" },
+    { "id": 2002, "name": "Lustrous Razor", "rarity": 5, "type": "Standard", "image": "2002.png" },
+    { "id": 2003, "name": "Abyss Surges", "rarity": 5, "type": "Standard", "image": "2003.png" },
+    { "id": 2004, "name": "Static Mist", "rarity": 5, "type": "Standard", "image": "2004.png" },
+    { "id": 2005, "name": "Cosmic Ripples", "rarity": 5, "type": "Standard", "image": "2005.png" },
 
-    { "id": 3001, "name": "Dauntless Evernight", "rarity": 4, "type": "Standard" },
-    { "id": 3002, "name": "Jinzhou Keeper", "rarity": 4, "type": "Standard" },
-    { "id": 3003, "name": "Commando of Conviction", "rarity": 4, "type": "Standard" },
-    { "id": 3004, "name": "Undying Flame", "rarity": 4, "type": "Standard" },
-    { "id": 3005, "name": "Amity Accord", "rarity": 4, "type": "Standard" },
-    { "id": 3006, "name": "Discord", "rarity": 4, "type": "Standard" },
-    { "id": 3007, "name": "Overture", "rarity": 4, "type": "Standard" },
-    { "id": 3008, "name": "Cadenza", "rarity": 4, "type": "Standard" },
-    { "id": 3009, "name": "Marcato", "rarity": 4, "type": "Standard" },
-    { "id": 3010, "name": "Variation", "rarity": 4, "type": "Standard" },
-    { "id": 3011, "name": "Helios Cleaver", "rarity": 4, "type": "Standard" },
-    { "id": 3012, "name": "Lunar Cutter", "rarity": 4, "type": "Standard" },
-    { "id": 3013, "name": "Novaburst", "rarity": 4, "type": "Standard" },
-    { "id": 3014, "name": "Hollow Mirage", "rarity": 4, "type": "Standard" },
-    { "id": 3015, "name": "Comet Flare", "rarity": 4, "type": "Standard" },
-    { "id": 3016, "name": "Waning Redshift", "rarity": 4, "type": "Standard" },
-    { "id": 3017, "name": "Endless Collapse", "rarity": 4, "type": "Standard" },
-    { "id": 3018, "name": "Relativistic Jet", "rarity": 4, "type": "Standard" },
-    { "id": 3019, "name": "Celestial Spiral", "rarity": 4, "type": "Standard" },
-    { "id": 3020, "name": "Fusion Accretion", "rarity": 4, "type": "Standard" },
+    { "id": 3001, "name": "Dauntless Evernight", "rarity": 4, "type": "Standard", "image": "3001.png" },
+    { "id": 3002, "name": "Jinzhou Keeper", "rarity": 4, "type": "Standard", "image": "3002.png" },
+    { "id": 3003, "name": "Commando of Conviction", "rarity": 4, "type": "Standard", "image": "3003.png" },
+    { "id": 3004, "name": "Undying Flame", "rarity": 4, "type": "Standard", "image": "3004.png" },
+    { "id": 3005, "name": "Amity Accord", "rarity": 4, "type": "Standard", "image": "3005.png" },
+    { "id": 3006, "name": "Discord", "rarity": 4, "type": "Standard", "image": "3006.png" },
+    { "id": 3007, "name": "Overture", "rarity": 4, "type": "Standard", "image": "3007.png" },
+    { "id": 3008, "name": "Cadenza", "rarity": 4, "type": "Standard", "image": "3008.png" },
+    { "id": 3009, "name": "Marcato", "rarity": 4, "type": "Standard", "image": "3009.png" },
+    { "id": 3010, "name": "Variation", "rarity": 4, "type": "Standard", "image": "3010.png" },
+    { "id": 3011, "name": "Helios Cleaver", "rarity": 4, "type": "Standard", "image": "3011.png" },
+    { "id": 3012, "name": "Lunar Cutter", "rarity": 4, "type": "Standard", "image": "3012.png" },
+    { "id": 3013, "name": "Novaburst", "rarity": 4, "type": "Standard", "image": "3013.png" },
+    { "id": 3014, "name": "Hollow Mirage", "rarity": 4, "type": "Standard", "image": "3014.png" },
+    { "id": 3015, "name": "Comet Flare", "rarity": 4, "type": "Standard", "image": "3015.png" },
+    { "id": 3016, "name": "Waning Redshift", "rarity": 4, "type": "Standard", "image": "3016.png" },
+    { "id": 3017, "name": "Endless Collapse", "rarity": 4, "type": "Standard", "image": "3017.png" },
+    { "id": 3018, "name": "Relativistic Jet", "rarity": 4, "type": "Standard", "image": "3018.png" },
+    { "id": 3019, "name": "Celestial Spiral", "rarity": 4, "type": "Standard", "image": "3019.png" },
+    { "id": 3020, "name": "Fusion Accretion", "rarity": 4, "type": "Standard", "image": "3020.png" },
 
-    { "id": 4001, "name": "Broadblade of Night", "rarity": 3, "type": "Standard" },
-    { "id": 4002, "name": "Sword of Night", "rarity": 3, "type": "Standard" },
-    { "id": 4003, "name": "Pistols of Night", "rarity": 3, "type": "Standard" },
-    { "id": 4004, "name": "Gauntlets of Night", "rarity": 3, "type": "Standard" },
-    { "id": 4003, "name": "Rectifier of Night", "rarity": 3, "type": "Standard" },
-    { "id": 4005, "name": "Broadblade of Voyager", "rarity": 3, "type": "Standard" },
-    { "id": 4006, "name": "Sword of Voyager", "rarity": 3, "type": "Standard" },
-    { "id": 4007, "name": "Pistols of Voyager", "rarity": 3, "type": "Standard" },
-    { "id": 4008, "name": "Gauntlets of Voyager", "rarity": 3, "type": "Standard" },
-    { "id": 4009, "name": "Rectifier of Voyager", "rarity": 3, "type": "Standard" },
-    { "id": 4010, "name": "Originite: Type I", "rarity": 3, "type": "Standard" },
-    { "id": 4011, "name": "Originite: Type II", "rarity": 3, "type": "Standard" },
-    { "id": 4012, "name": "Originite: Type III", "rarity": 3, "type": "Standard" },
-    { "id": 4013, "name": "Originite: Type IV", "rarity": 3, "type": "Standard" },
-    { "id": 4014, "name": "Originite: Type V", "rarity": 3, "type": "Standard" }
+    { "id": 4001, "name": "Broadblade of Night", "rarity": 3, "type": "Standard", "image": "4001.png" },
+    { "id": 4002, "name": "Sword of Night", "rarity": 3, "type": "Standard", "image": "4002.png" },
+    { "id": 4003, "name": "Pistols of Night", "rarity": 3, "type": "Standard", "image": "4003.png" },
+    { "id": 4004, "name": "Gauntlets of Night", "rarity": 3, "type": "Standard", "image": "4004.png" },
+    { "id": 4005, "name": "Rectifier of Night", "rarity": 3, "type": "Standard", "image": "4005.png" },
+    { "id": 4006, "name": "Broadblade of Voyager", "rarity": 3, "type": "Standard", "image": "4006.png" },
+    { "id": 4007, "name": "Sword of Voyager", "rarity": 3, "type": "Standard", "image": "4007.png" },
+    { "id": 4008, "name": "Pistols of Voyager", "rarity": 3, "type": "Standard", "image": "4008.png" },
+    { "id": 4009, "name": "Gauntlets of Voyager", "rarity": 3, "type": "Standard", "image": "4009.png" },
+    { "id": 4010, "name": "Rectifier of Voyager", "rarity": 3, "type": "Standard", "image": "4010.png" },
+    { "id": 4011, "name": "Originite: Type I", "rarity": 3, "type": "Standard", "image": "4011.png" },
+    { "id": 4012, "name": "Originite: Type II", "rarity": 3, "type": "Standard", "image": "4012.png" },
+    { "id": 4013, "name": "Originite: Type III", "rarity": 3, "type": "Standard", "image": "4013.png" },
+    { "id": 4014, "name": "Originite: Type IV", "rarity": 3, "type": "Standard", "image": "4014.png" },
+    { "id": 4015, "name": "Originite: Type V", "rarity": 3, "type": "Standard", "image": "4015.png" }
   ],
   "banners": {
-    "character_featured": {
-      "key": "character_featured",
-      "name": "Featured Resonator Convene",
-      "type": "character",
-      "featured": [101],
-      "rate_up_4_star": [301, 302, 303],
-      "rate_up_chance": 0.5
+    "character_featured": { 
+      "key": "character_featured", 
+      "name": "Featured Resonator Convene", 
+      "type": "character", 
+      "featured": [101], "rate_up_4_star": [301, 302, 303], 
+      "rate_up_chance": 0.5 
     },
-    "weapon_featured": {
-      "key": "weapon_featured",
-      "name": "Featured Weapon Convene",
-      "type": "weapon",
-      "featured": [1001],
-      "guarantee_system": true
+    "weapon_featured": { 
+      "key": "weapon_featured", 
+      "name": "Featured Weapon Convene", 
+      "type": "weapon", "featured": [1001], 
+      "guarantee_system": true 
     },
-    "character_standard": {
-      "key": "character_standard",
-      "name": "Standard Resonator Convene",
-      "type": "character"
-    },
-    "weapon_standard": {
-      "key": "weapon_standard",
-      "name": "Standard Weapon Convene",
-      "type": "weapon"
-    }
+    "character_standard": { "key": "character_standard", "name": "Standard Resonator Convene", "type": "character" },
+    "weapon_standard": { "key": "weapon_standard", "name": "Standard Weapon Convene", "type": "weapon" }
   }
 }
