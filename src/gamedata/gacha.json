@@ -13,8 +13,8 @@
     "four_star": 10
   },
   "soft_pity": {
-    "character": { "start_at_pity": 74, "rate_increase": 0.08 },
-    "weapon": { "start_at_pity": 74, "rate_increase": 0.08 }
+    "character": { "start_at_pity": 65, "rate_increase": 0.06 },
+    "weapon": { "start_at_pity": 55, "rate_increase": 0.04 }
   },
   "resonators": [
     { "id": 101, "name": "Galbrena", "rarity": 5, "type": "Limited", "image": "101.png" },

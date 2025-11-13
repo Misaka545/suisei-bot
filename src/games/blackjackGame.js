@@ -131,9 +131,9 @@ class BlackjackGame {
 
   hitPlayer() {
     // Auto-hit until player's score > 16
-    while (this.playerHand.getScore() <= 16) {
-      this.playerHand.addCard(this.deck.deal());
-    }
+    // while (this.playerHand.getScore() <= 16) {
+    this.playerHand.addCard(this.deck.deal());
+    // }
 
     // If player busts (>21), dealer still hits until >16
     if (this.playerHand.isBust()) {
@@ -152,7 +152,7 @@ class BlackjackGame {
   }
 
   standPlayer() {
-    // If player tries to stand with <=16, force auto-hits until >16
+    // If player tries to stand with <=16, force auto-hits until >16 (punishment)
     while (this.playerHand.getScore() <= 16) {
       this.playerHand.addCard(this.deck.deal());
     }
