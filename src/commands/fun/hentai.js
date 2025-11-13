@@ -4,14 +4,15 @@ const { getHentaiImage } = require("../../services/imageService");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hentai')
-    .setDescription('Gửi ảnh hoặc video hentai (chỉ trong NSFW channel).')
+    .setDescription('Gửi ảnh, gif, hoặc video hentai. Sẽ random nếu không chọn type.')
     .addStringOption(option =>
       option.setName('type')
-        .setDescription('Chọn loại kết quả (ảnh hoặc video/gif)')
-        .setRequired(true)
+        .setDescription('Chọn loại kết quả bạn muốn (mặc định là random)')
+        .setRequired(false) // This is now optional
         .addChoices(
           { name: 'Ảnh (Image)', value: 'image' },
-          { name: 'Video / GIF', value: 'gif' }
+          { name: 'GIF (Animated)', value: 'gif' },
+          { name: 'Video (Animated)', value: 'video' }
         )),
   async execute(interaction) {
     if (!interaction.channel || !interaction.channel.nsfw) {
@@ -24,17 +25,29 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      const type = interaction.options.getString('type');
-      const isGif = (type === 'gif'); // Convert the choice to a boolean
+      const userType = interaction.options.getString('type');
+      let isGif;
+
+      if (userType) {
+        // If user chose a type, use it
+        isGif = (userType === 'gif' || userType === 'video');
+      } else {
+        // If user did not choose, randomize it (50% chance for a GIF)
+        isGif = Math.random() < 0.5;
+      }
 
       const imageUrl = await getHentaiImage(isGif);
 
       if (!imageUrl) {
-        return interaction.editReply(`⚠️ Không tìm thấy kết quả nào cho loại '${type}'. Thử lại sau nhé!`);
+        const finalType = userType || (isGif ? 'gif' : 'image');
+        return interaction.editReply(`⚠️ Không tìm thấy kết quả nào cho loại '${finalType}'.`);
       }
 
+      const finalTypeDisplay = userType || (isGif ? 'random GIF' : 'random Image');
+      const contentMessage = `🔞 Hentai (${finalTypeDisplay}) cho bạn:`;
+
       await interaction.editReply({
-        content: `🔞 Hentai ${type} cho bạn:`,
+        content: contentMessage,
         embeds: [
           {
             title: 'NSFW Hentai',
