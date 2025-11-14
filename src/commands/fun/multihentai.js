@@ -1,18 +1,19 @@
 const { SlashCommandBuilder } = require("discord.js");
 const { getHentaiImage } = require("../../services/imageService");
 
+// KHÔNG CẦN hàm delay ở đây nữa
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('multihentai')
-    .setDescription('Gửi 3 ảnh/video hentai cùng lúc. Sẽ random nếu không chọn type.')
+    .setDescription('Gửi 3 ảnh/gif hentai. Sẽ random nếu không chọn type.') // Cập nhật mô tả
     .addStringOption(option =>
       option.setName('type')
         .setDescription('Chọn loại kết quả bạn muốn (mặc định là random)')
-        .setRequired(false) // Optional
+        .setRequired(false)
         .addChoices(
           { name: 'Ảnh (Image)', value: 'image' },
-          { name: 'GIF (Animated)', value: 'gif' },
-          { name: 'Video (Animated)', value: 'video' }
+          { name: 'GIF (Animated)', value: 'gif' }
         )),
   async execute(interaction) {
     if (!interaction.channel || !interaction.channel.nsfw) {
@@ -28,37 +29,36 @@ module.exports = {
       const userType = interaction.options.getString('type');
       const promises = [];
 
-      // Create 3 requests to the API
+      // Quay trở lại vòng lặp 3 lần
       for (let i = 0; i < 3; i++) {
         let isGif;
         if (userType) {
-          isGif = (userType === 'gif' || userType === 'video');
+          isGif = (userType === 'gif');
         } else {
-          // Randomize for each of the 3 results if no type is chosen
           isGif = Math.random() < 0.5;
         }
+        // Thêm promise vào mảng để thực thi song song
         promises.push(getHentaiImage(isGif));
       }
 
-      // Await all promises to run them in parallel for speed
+      // Sử dụng Promise.all để chạy tất cả các yêu cầu cùng lúc (không delay)
       const results = await Promise.all(promises);
-      const validUrls = results.filter(url => url); // Filter out any null results
+      const validUrls = results.filter(url => url);
 
       if (validUrls.length === 0) {
         return interaction.editReply(`⚠️ Không tìm thấy kết quả nào. API có thể đang gặp sự cố.`);
       }
 
-      // Create an embed for each valid URL
       const embeds = validUrls.map(url => ({
         image: { url: url },
-        footer: { text: 'Nguồn: waifu.im (NSFW)' }
+        footer: { text: 'Nguồn: waifu.im' } // Thêm footer để ghi nguồn
       }));
       
       const contentMessage = `🔞 ${validUrls.length} kết quả hentai cho bạn:`;
 
       await interaction.editReply({
         content: contentMessage,
-        embeds: embeds // Discord supports sending up to 10 embeds at once
+        embeds: embeds
       });
 
     } catch (err) {

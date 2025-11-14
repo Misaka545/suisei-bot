@@ -4,7 +4,7 @@ const { getAnimeImage } = require("../../services/imageService");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('anime')
-    .setDescription('Gửi một ảnh anime bất kỳ (SFW).'),
+    .setDescription('Gửi một ảnh anime bất kỳ.'),
   async execute(interaction) {
     try {
       await interaction.deferReply();

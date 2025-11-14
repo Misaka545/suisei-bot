@@ -1,7 +1,7 @@
 // src/services/imageService.js
 const axios = require('axios');
 
-// SFW functions remain the same
+// Các hàm SFW khác giữ nguyên
 async function getAnimeImage() {
   const categories = ['waifu', 'neko', 'shinobu', 'megumin'];
   const randomCat = categories[Math.floor(Math.random() * categories.length)];
@@ -26,35 +26,38 @@ async function getMemeImage() {
     subreddit: res.data.subreddit
   };
 }
-async function getGifImage() {
-  const res = await axios.get('https://nekos.best/api/v2/hug');
-  const first = res.data.results && res.data.results[0];
-  if (!first) throw new Error('No GIF found');
-  return {
-    url: first.url,
-    anime: first.anime_name || 'Unknown'
-  };
+
+// HÀM ĐƯỢC NÂNG CẤP
+/**
+ * Lấy ảnh hoặc GIF từ API nekos.best dựa trên một danh mục cụ thể.
+ * @param {string} category - Tên của danh mục (ví dụ: 'hug', 'pat', 'waifu').
+ */
+async function getGifImage(category) {
+  try {
+    const res = await axios.get(`https://nekos.best/api/v2/${category}`);
+    const first = res.data.results && res.data.results[0];
+    if (!first) return null; // Trả về null nếu API không tìm thấy kết quả
+    return {
+      url: first.url,
+      anime: first.anime_name || 'Unknown'
+    };
+  } catch (error) {
+    console.error(`Lỗi API Nekos.best cho danh mục '${category}':`, error.message);
+    throw error; // Ném lỗi ra để lệnh có thể xử lý
+  }
 }
 
-// ==========================================================
-// REVERTED SECTION FOR NSFW COMMANDS
-// ==========================================================
-
+// Các hàm NSFW giữ nguyên
 async function getWaifuImResult(tag, isGif = false) {
   try {
     const res = await axios.get('https://api.waifu.im/search', {
-      params: {
-        included_tags: tag,
-        is_nsfw: true,
-        gif: isGif
-      }
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.5",
+      },
+      params: { included_tags: tag, is_nsfw: true, gif: isGif }
     });
-
-    if (res.data.images && res.data.images.length > 0) {
-      return res.data.images[0].url;
-    }
-    return null;
-
+    return res.data.images && res.data.images.length > 0 ? res.data.images[0].url : null;
   } catch (error) {
     if (error.response && error.response.status === 404) {
       console.log(`Waifu.im API returned 404 for tag '${tag}' (isGif: ${isGif}).`);
@@ -63,7 +66,6 @@ async function getWaifuImResult(tag, isGif = false) {
     throw error;
   }
 }
-
 async function getNSFWImage(isGif = false) {
   return getWaifuImResult('waifu', isGif);
 }
@@ -74,7 +76,7 @@ async function getHentaiImage(isGif = false) {
   return getWaifuImResult('hentai', isGif);
 }
 
-// Export all functions
+// Export tất cả các hàm
 module.exports = {
   getAnimeImage,
   getWaifuImage,
@@ -83,5 +85,5 @@ module.exports = {
   getNSFWImage,
   getYuriImage,
   getHentaiImage,
-  getGifImage
+  getGifImage 
 };

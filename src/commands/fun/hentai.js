@@ -4,15 +4,14 @@ const { getHentaiImage } = require("../../services/imageService");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hentai')
-    .setDescription('Gửi ảnh, gif, hoặc video hentai. Sẽ random nếu không chọn type.')
+    .setDescription('Gửi ảnh hoặc gif hentai. Sẽ random nếu không chọn type.')
     .addStringOption(option =>
       option.setName('type')
         .setDescription('Chọn loại kết quả bạn muốn (mặc định là random)')
-        .setRequired(false) // This is now optional
+        .setRequired(false) // Now optional
         .addChoices(
           { name: 'Ảnh (Image)', value: 'image' },
-          { name: 'GIF (Animated)', value: 'gif' },
-          { name: 'Video (Animated)', value: 'video' }
+          { name: 'GIF (Animated)', value: 'gif' }
         )),
   async execute(interaction) {
     if (!interaction.channel || !interaction.channel.nsfw) {
@@ -30,9 +29,9 @@ module.exports = {
 
       if (userType) {
         // If user chose a type, use it
-        isGif = (userType === 'gif' || userType === 'video');
+        isGif = (userType === 'gif');
       } else {
-        // If user did not choose, randomize it (50% chance for a GIF)
+        // If user did not choose, randomize it
         isGif = Math.random() < 0.5;
       }
 
