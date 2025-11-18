@@ -17,7 +17,7 @@
     "weapon": { "start_at_pity": 55, "rate_increase": 0.04 }
   },
   "resonators": [
-    { "id": 101, "name": "Galbrena", "rarity": 5, "type": "Limited", "image": "101.png" },
+    { "id": 101, "name": "Chisa", "rarity": 5, "type": "Limited", "image": "101.png" },
 
     { "id": 201, "name": "Calcharo", "rarity": 5, "type": "Standard", "image": "201.png" },
     { "id": 202, "name": "Verina", "rarity": 5, "type": "Standard", "image": "202.png" },
@@ -38,7 +38,7 @@
     { "id": 311, "name": "Yangyang", "rarity": 4, "type": "Standard", "image": "311.png" }
   ],
   "weapons": [
-    { "id": 1001, "name": "Lux & Umbra", "rarity": 5, "type": "Limited", "image": "1001.png" },
+    { "id": 1001, "name": "Kumokiri", "rarity": 5, "type": "Limited", "image": "1001.png" },
 
     { "id": 2001, "name": "Emerald of Genesis", "rarity": 5, "type": "Standard", "image": "2001.png" },
     { "id": 2002, "name": "Lustrous Razor", "rarity": 5, "type": "Standard", "image": "2002.png" },
