@@ -1,0 +1,39 @@
+{
+  "name": "suisei-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Discord bot: Music + Gemini Chat + Utilities",
+  "type": "commonjs",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node src/deploy-commands.js",
+    "build": "echo Skipping build",
+    "postinstall": "node -e \"(async()=>{try{const y=require('yt-dlp-exec'); if(y.exec){await y.exec('--version')} else {await y('--version')} console.log('yt-dlp ready')}catch(e){console.log('yt-dlp warmup skipped:', e?.message||e)}})()\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.19.0",
+    "@google/generative-ai": "^0.24.1",
+    "@snazzah/davey": "^0.1.7",
+    "axios": "^1.13.2",
+    "canvas": "^3.2.0",
+    "discord.js": "^14.23.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "ffmpeg-static": "^5.2.0",
+    "libsodium-wrappers": "^0.7.15",
+    "mathjs": "^14.8.2",
+    "node-cron": "^4.2.1",
+    "node-fetch": "^3.3.2",
+    "opusscript": "^0.0.8",
+    "play-dl": "^1.9.7",
+    "pm2": "^6.0.13",
+    "prism-media": "^1.3.5",
+    "uuid": "^13.0.0",
+    "yt-dlp-exec": "^1.0.2"
+  }
+}

@@ -1,0 +1,31 @@
+@'
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+#File
+*.mp3
+*.mp4
+*.png
+bin/
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Misc
+dist/
+build/
+'@ | Out-File -Encoding utf8 .gitignore
