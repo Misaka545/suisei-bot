@@ -1,0 +1,103 @@
+{
+  "rarities": {
+  "5": { "name": "5-Star", "color": "#FFB13A", "lineColor": "#D9A44E", "emoji": "⭐⭐⭐⭐⭐" },
+  "4": { "name": "4-Star", "color": "#A069FF", "lineColor": "#9956D4", "emoji": "⭐⭐⭐⭐" },
+  "3": { "name": "3-Star", "color": "#639FFF", "lineColor": "#4983BF", "emoji": "⭐⭐⭐" }
+  },
+  "rates": {
+    "character": { "5": 0.008, "4": 0.06, "3": 0.932 },
+    "weapon": { "5": 0.008, "4": 0.12, "3": 0.872 }
+  },
+  "pity": {
+    "five_star": 80,
+    "four_star": 10
+  },
+  "soft_pity": {
+    "character": { "start_at_pity": 65, "rate_increase": 0.06 },
+    "weapon": { "start_at_pity": 55, "rate_increase": 0.04 }
+  },
+  "resonators": [
+    { "id": 101, "name": "Chisa", "rarity": 5, "type": "Limited", "image": "101.png" },
+
+    { "id": 201, "name": "Calcharo", "rarity": 5, "type": "Standard", "image": "201.png" },
+    { "id": 202, "name": "Verina", "rarity": 5, "type": "Standard", "image": "202.png" },
+    { "id": 203, "name": "Encore", "rarity": 5, "type": "Standard", "image": "203.png" },
+    { "id": 204, "name": "Jianxin", "rarity": 5, "type": "Standard", "image": "204.png"},
+    { "id": 205, "name": "Lingyang", "rarity": 5, "type": "Standard", "image": "205.png"},
+
+    { "id": 301, "name": "Danjin", "rarity": 4, "type": "Standard", "image": "301.png" },
+    { "id": 302, "name": "Sanhua", "rarity": 4, "type": "Standard", "image": "302.png" },
+    { "id": 303, "name": "Mortefi", "rarity": 4, "type": "Standard", "image": "303.png" },
+    { "id": 304, "name": "Taoqi", "rarity": 4, "type": "Standard", "image": "304.png" },
+    { "id": 305, "name": "Aalto", "rarity": 4, "type": "Standard", "image": "305.png" },
+    { "id": 306, "name": "Yuanwu", "rarity": 4, "type": "Standard", "image": "306.png" },
+    { "id": 307, "name": "Lumi", "rarity": 4, "type": "Standard", "image": "307.png" },
+    { "id": 308, "name": "Chixia", "rarity": 4, "type": "Standard", "image": "308.png" },
+    { "id": 309, "name": "Youhu", "rarity": 4, "type": "Standard", "image": "309.png" },
+    { "id": 310, "name": "Baizhi", "rarity": 4, "type": "Standard", "image": "310.png" },
+    { "id": 311, "name": "Yangyang", "rarity": 4, "type": "Standard", "image": "311.png" }
+  ],
+  "weapons": [
+    { "id": 1001, "name": "Kumokiri", "rarity": 5, "type": "Limited", "image": "1001.png" },
+
+    { "id": 2001, "name": "Emerald of Genesis", "rarity": 5, "type": "Standard", "image": "2001.png" },
+    { "id": 2002, "name": "Lustrous Razor", "rarity": 5, "type": "Standard", "image": "2002.png" },
+    { "id": 2003, "name": "Abyss Surges", "rarity": 5, "type": "Standard", "image": "2003.png" },
+    { "id": 2004, "name": "Static Mist", "rarity": 5, "type": "Standard", "image": "2004.png" },
+    { "id": 2005, "name": "Cosmic Ripples", "rarity": 5, "type": "Standard", "image": "2005.png" },
+
+    { "id": 3001, "name": "Dauntless Evernight", "rarity": 4, "type": "Standard", "image": "3001.png" },
+    { "id": 3002, "name": "Jinzhou Keeper", "rarity": 4, "type": "Standard", "image": "3002.png" },
+    { "id": 3003, "name": "Commando of Conviction", "rarity": 4, "type": "Standard", "image": "3003.png" },
+    { "id": 3004, "name": "Undying Flame", "rarity": 4, "type": "Standard", "image": "3004.png" },
+    { "id": 3005, "name": "Amity Accord", "rarity": 4, "type": "Standard", "image": "3005.png" },
+    { "id": 3006, "name": "Discord", "rarity": 4, "type": "Standard", "image": "3006.png" },
+    { "id": 3007, "name": "Overture", "rarity": 4, "type": "Standard", "image": "3007.png" },
+    { "id": 3008, "name": "Cadenza", "rarity": 4, "type": "Standard", "image": "3008.png" },
+    { "id": 3009, "name": "Marcato", "rarity": 4, "type": "Standard", "image": "3009.png" },
+    { "id": 3010, "name": "Variation", "rarity": 4, "type": "Standard", "image": "3010.png" },
+    { "id": 3011, "name": "Helios Cleaver", "rarity": 4, "type": "Standard", "image": "3011.png" },
+    { "id": 3012, "name": "Lunar Cutter", "rarity": 4, "type": "Standard", "image": "3012.png" },
+    { "id": 3013, "name": "Novaburst", "rarity": 4, "type": "Standard", "image": "3013.png" },
+    { "id": 3014, "name": "Hollow Mirage", "rarity": 4, "type": "Standard", "image": "3014.png" },
+    { "id": 3015, "name": "Comet Flare", "rarity": 4, "type": "Standard", "image": "3015.png" },
+    { "id": 3016, "name": "Waning Redshift", "rarity": 4, "type": "Standard", "image": "3016.png" },
+    { "id": 3017, "name": "Endless Collapse", "rarity": 4, "type": "Standard", "image": "3017.png" },
+    { "id": 3018, "name": "Relativistic Jet", "rarity": 4, "type": "Standard", "image": "3018.png" },
+    { "id": 3019, "name": "Celestial Spiral", "rarity": 4, "type": "Standard", "image": "3019.png" },
+    { "id": 3020, "name": "Fusion Accretion", "rarity": 4, "type": "Standard", "image": "3020.png" },
+
+    { "id": 4001, "name": "Broadblade of Night", "rarity": 3, "type": "Standard", "image": "4001.png" },
+    { "id": 4002, "name": "Sword of Night", "rarity": 3, "type": "Standard", "image": "4002.png" },
+    { "id": 4003, "name": "Pistols of Night", "rarity": 3, "type": "Standard", "image": "4003.png" },
+    { "id": 4004, "name": "Gauntlets of Night", "rarity": 3, "type": "Standard", "image": "4004.png" },
+    { "id": 4005, "name": "Rectifier of Night", "rarity": 3, "type": "Standard", "image": "4005.png" },
+    { "id": 4006, "name": "Broadblade of Voyager", "rarity": 3, "type": "Standard", "image": "4006.png" },
+    { "id": 4007, "name": "Sword of Voyager", "rarity": 3, "type": "Standard", "image": "4007.png" },
+    { "id": 4008, "name": "Pistols of Voyager", "rarity": 3, "type": "Standard", "image": "4008.png" },
+    { "id": 4009, "name": "Gauntlets of Voyager", "rarity": 3, "type": "Standard", "image": "4009.png" },
+    { "id": 4010, "name": "Rectifier of Voyager", "rarity": 3, "type": "Standard", "image": "4010.png" },
+    { "id": 4011, "name": "Originite: Type I", "rarity": 3, "type": "Standard", "image": "4011.png" },
+    { "id": 4012, "name": "Originite: Type II", "rarity": 3, "type": "Standard", "image": "4012.png" },
+    { "id": 4013, "name": "Originite: Type III", "rarity": 3, "type": "Standard", "image": "4013.png" },
+    { "id": 4014, "name": "Originite: Type IV", "rarity": 3, "type": "Standard", "image": "4014.png" },
+    { "id": 4015, "name": "Originite: Type V", "rarity": 3, "type": "Standard", "image": "4015.png" }
+  ],
+  "banners": {
+    "character_featured": { 
+      "key": "character_featured", 
+      "name": "Featured Resonator Convene", 
+      "type": "character", 
+      "featured": [101], "rate_up_4_star": [301, 302, 303], 
+      "rate_up_chance": 0.5 
+    },
+    "weapon_featured": { 
+      "key": "weapon_featured", 
+      "name": "Featured Weapon Convene", 
+      "type": "weapon", "featured": [1001], 
+      "guarantee_system": true 
+    },
+    "character_standard": { "key": "character_standard", "name": "Standard Resonator Convene", "type": "character" },
+    "weapon_standard": { "key": "weapon_standard", "name": "Standard Weapon Convene", "type": "weapon" }
+  }
+}
