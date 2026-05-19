@@ -1,7 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 const chatSessions = new Map(); // Map<channelId, { persona, memory, model, history[] }>
 const MAX_HISTORY_PAIRS = 8;
@@ -18,7 +18,7 @@ function ensureChat(channelId) {
       memory: [],
       model: DEFAULT_GEMINI_MODEL,
       history: [],
-      lang: "auto", 
+      lang: "auto",
     };
     chatSessions.set(channelId, s);
   }

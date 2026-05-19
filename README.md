@@ -20,8 +20,8 @@ Suisei is a feature-rich, AI-powered Discord bot built with Discord.js and Googl
 1.  **Node.js** (v18 or newer recommended).
 2.  **Docker & Docker Compose** (required for the local Piston code execution engine).
 3.  **Discord Bot Token** from the [Discord Developer Portal](https://discord.com/developers/applications).
-    *   *Required Intents:* `Message Content Intent`, `Server Members Intent`, and `Guilde Messages`.
-4.  **Google Gemini API Key** from Google AI Studio.
+    *   *Required Intents:* `Message Content Intent`, `Server Members Intent`, and `Guild Messages`.
+4.  **Google Gemini API Key** from Google AI Studio (Recommended model: `gemini-2.5-flash`).
 
 ### Installation
 
@@ -54,11 +54,15 @@ Suisei is a feature-rich, AI-powered Discord bot built with Discord.js and Googl
     *Note: The engine will take a moment to download and install language runtimes (Python, Node, GCC, etc.) on its first launch.*
 
 5.  **Run the Bot:**
-    ```bash
-    npm start
-    # Recommended: Use PM2 for process management in production
-    pm2 start src/index.js --name suisei
-    ```
+    
+    *   **For Windows:** Simply double-click the `suisei-bot.bat` file. This will automatically start the bot in the background using PM2 and save its state.
+    *   **For Linux/Mac:**
+        ```bash
+        npm start
+        # Or manage via PM2 (recommended):
+        pm2 start src/index.js --name "suisei-bot"
+        pm2 save
+        ```
 
 ## Usage Examples
 
