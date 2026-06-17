@@ -28,7 +28,7 @@ module.exports = {
     let reply = "";
 
     try {
-      reply = await aiGenerate(session, message);
+      reply = await aiGenerate(session, message, interaction.guildId);
     } catch (llmError) {
       console.error("[Chat] LLM error:", llmError);
       await editOrFollowLong(interaction, "❌ Lỗi AI tạo câu trả lời.", { ephemeral: true });
@@ -75,7 +75,7 @@ module.exports = {
           console.warn("[ChatVA] cannot clear deaf/mute/suppress:", e?.message || e);
         }
 
-        await speakTextToChannel(voiceChannel, reply, session.lang || "auto");
+        await speakTextToChannel(voiceChannel, reply, interaction.guildId);
       } catch (ttsError) {
         console.error("[Chat] TTS error:", ttsError);
         await interaction.followUp({

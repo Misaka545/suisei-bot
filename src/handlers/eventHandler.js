@@ -2,6 +2,7 @@ const { ytdlp } = require("../utils/youtubeHelpers");
 const { Events } = require("discord.js");
 const { ensureChat, aiGenerate } = require("../utils/aiChatState");
 const { chunkText } = require("../utils/discordHelpers");
+const { speakTextToChannel } = require("../services/ttsService");
 
 async function registerCoreEvents(client) {
   (async () => {
@@ -132,7 +133,7 @@ async function registerCoreEvents(client) {
           const aiPrompt = `Here is a transcript of the latest messages in this channel:\n\n${transcript}\n\nBased on these messages, please provide a concise 'TL;DR' summary of the recent conversations and what people are talking about. Include interesting highlights.`;
 
           const session = ensureChat(message.channel.id);
-          const replyText = await aiGenerate(session, aiPrompt);
+          const replyText = await aiGenerate(session, aiPrompt, message.guild.id);
           return message.channel.send(replyText);
         } catch (err) {
           console.error("Summary error:", err);
@@ -159,11 +160,24 @@ async function registerCoreEvents(client) {
         }
 
         const session = ensureChat(message.channel.id);
-        const replyText = await aiGenerate(session, aiInput);
+        const replyText = await aiGenerate(session, aiInput, message.guild.id);
         
         const chunks = chunkText(replyText);
         for (const chunk of chunks) {
           await message.channel.send(chunk);
+        }
+
+        // Auto-TTS: if user is in a voice channel, speak the response
+        try {
+          const member = await message.guild.members.fetch(message.author.id).catch(() => null);
+          const voiceChannel = member?.voice?.channel;
+          if (voiceChannel) {
+            speakTextToChannel(voiceChannel, replyText, message.guild.id).catch(err =>
+              console.warn("[AutoTTS] Failed:", err.message)
+            );
+          }
+        } catch (autoTtsErr) {
+          console.warn("[AutoTTS] Error checking voice state:", autoTtsErr.message);
         }
       } catch (error) {
         console.error("AI Generation Error:", error);

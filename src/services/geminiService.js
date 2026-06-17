@@ -2,23 +2,13 @@
 const fetch = global.fetch || ((...a)=>import('node-fetch').then(({default:f})=>f(...a)));
 const API_KEY = process.env.GOOGLE_API_KEY;
 
-// Prefer 2.0 Flash, then other working fallbacks
 const PREFERRED_STT_MODELS = [
-  process.env.STT_MODEL,            // allow override via .env
-  "gemini-2.0-flash",               // your preferred choice
-  "gemini-2.0-flash-lite",          // if your project has only lite
-  "gemini-1.5-flash-latest",        // older but reliable
-  "gemini-1.5-flash",
-  "gemini-1.5-pro-latest"
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash"
 ].filter(Boolean);
 
 function normalizeModel(name = "") {
-  const n = name.trim().toLowerCase();
-  if (!n) return "";
-  if (n === "2.0-flash" || n === "gemini-2.0") return "gemini-2.0-flash";
-  if (n === "gemini-pro") return "gemini-1.5-pro-latest";
-  if (n === "1.5-flash") return "gemini-1.5-flash-latest";
-  return name;
+  return name.trim();
 }
 
 async function callGeminiV1GenerateContent(model, wavBuffer) {
@@ -66,6 +56,10 @@ async function geminiTranscribe(wavBuffer) {
       console.warn(`[STT] model ${m} returned empty text, trying next…`);
     } catch (e) {
       const msg = e?.message || String(e);
+      if (e?.status === 429 || /quota|rate limit/i.test(msg)) {
+        console.warn(`[STT] model ${m} is out of quota (Rate Limited), falling back to next model...`);
+        lastErr = e; continue;
+      }
       if (e?.status === 404 || /not found|unknown model|unsupported/i.test(msg)) {
         console.warn(`[STT] model ${m} not available, trying next…`);
         lastErr = e; continue;

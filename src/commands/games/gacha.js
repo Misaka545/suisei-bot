@@ -1,16 +1,42 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
-const { createAudioResource, AudioPlayerStatus, entersState } = require("@discordjs/voice");
 const { createCanvas, loadImage } = require('canvas');
 const gachaConfig = require("../../gamedata/gacha.json");
 const { ensureUser, addToHistory } = require("../../utils/gachaState");
 const { connectIfNeeded } = require("../../utils/musicState");
+const { speakTextToChannel } = require("../../services/ttsService");
 const fs = require("fs");
 const path = require("path");
 
 // --- Define paths to asset directories ---
 const gachaImageDir = path.join(__dirname, '..', '..', 'assets', 'images', 'gacha');
 const uiImageDir = path.join(__dirname, '..', '..', 'assets', 'images', 'ui');
-const dialogueAudioDir = path.join(__dirname, '..', '..', 'assets', 'audio', 'dialogue');
+
+// --- VOICEVOX dialogue lines ---
+const dialogueLines = {
+  win_5050: [
+    "やったー！五分五分に勝ちました！あなたは本当に運がいいですね！おめでとうございます！",
+    "すごい！五分五分を見事に突破しました！その運、本当に羨ましいです！",
+    "欲しいキャラクターが来てくれましたね！天井を使わずに！素晴らしい！",
+  ],
+  lose_5050: [
+    "あぁ、五分五分に負けちゃいました。でも次は確定ですよ！頑張って！",
+    "すり抜けちゃいましたね。新しい星五キャラが慰めてくれるはず…ですよね？",
+    "五分五分負け！でもこれで次は百パーセント確定です。計画通りですよ！",
+    "常設のキャラクターが来ちゃいました。心配しないで、きっと強いですよ…たぶん。",
+  ],
+  general_win: [
+    "星五のキャラクターがあなたの呼びかけに応えました！温かく迎えてあげてくださいね！",
+    "低い天井で星五！今日は宇宙に愛されていますね！",
+    "おめでとうございます！新しい星五の仲間ですよ！冒険がもっと楽しくなりますね！",
+    "確定が発動しました！待っていたキャラクターがやっと来ましたよ！",
+  ],
+  bad_pull: [
+    "うーん、星三の武器ばかりですね。他の武器の強化に…きっと役立ちますよ。",
+    "今日は運が弱いみたいですね。次はきっと良い結果が出ますよ！",
+    "これは天井への投資です。未来のための投資だと思ってください！",
+    "経験値をたくさんもらいましたね。はい、たくさんの経験値です…。",
+  ],
+};
 
 // --- Pre-process data (remains the same) ---
 const { resonators, weapons, rarities, rates, pity, banners } = gachaConfig;
@@ -174,26 +200,15 @@ async function playDialogueAudio(interaction, category) {
     if (!voiceChannel) return;
 
     try {
-        const categoryDir = path.join(dialogueAudioDir, category);
-        if (!fs.existsSync(categoryDir)) return;
-        const files = fs.readdirSync(categoryDir).filter(f => f.endsWith('.mp3'));
-        if (files.length === 0) return;
-        const randomFile = files[Math.floor(Math.random() * files.length)];
-        const filePath = path.join(categoryDir, randomFile);
-        const connectionState = await connectIfNeeded(interaction, voiceChannel, { selfDeaf: false });
-        const player = connectionState.player;
-        if (!player) return;
-        const resource = createAudioResource(filePath);
-        const wasPlayingMusic = player.state.status === AudioPlayerStatus.Playing;
-        player.stop(true);
-        player.play(resource);
-        await entersState(player, AudioPlayerStatus.Idle, 30000);
-        if (wasPlayingMusic) {
-            console.log("[Dialogue Audio] Finished. Music queue will resume automatically.");
-        }
+        const lines = dialogueLines[category];
+        if (!lines || lines.length === 0) return;
+        const randomLine = lines[Math.floor(Math.random() * lines.length)];
+
+        console.log(`[Gacha TTS] Playing dialogue for category: ${category}`);
+        await speakTextToChannel(voiceChannel, randomLine, interaction.guildId);
     } catch (error) {
         if (error.code !== 'ABORT_ERR' && error.name !== 'AbortError') {
-            console.error("[Dialogue Audio Error]", error);
+            console.error("[Gacha TTS Error]", error);
         }
     }
 }

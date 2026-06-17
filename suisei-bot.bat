@@ -1,6 +1,11 @@
 @echo off
 cd /d "%~dp0"
 
+echo Starting Docker containers (Piston and VOICEVOX)...
+@REM call docker-compose -f piston-docker-compose.yml up -d
+call docker compose -f voicevox-docker-compose.yml up -d
+
+echo.
 echo Starting Suisei Bot with PM2...
 call pm2 start src/index.js --name "suisei-bot"
 

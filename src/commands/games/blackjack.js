@@ -1,21 +1,36 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require("discord.js");
 const { BlackjackGame } = require("../../games/blackjackGame");
-const { connectIfNeeded, music } = require("../../utils/musicState"); // Import the 'music' map
-const { createAudioResource, AudioPlayerStatus, entersState, getVoiceConnection } = require("@discordjs/voice");
-const fs = require("node:fs");
-const path = require("node:path");
+const { connectIfNeeded, music } = require("../../utils/musicState");
+const { getVoiceConnection } = require("@discordjs/voice");
+const { speakTextToChannel } = require("../../services/ttsService");
 
 // A map to store active blackjack games by channel ID
 const activeGames = new Map();
 
-// --- REMOVED: The separate blackjackPlayer is gone ---
-
-// Define the base directory for our blackjack audio assets
-const audioDir = path.join(__dirname, '..', '..', 'assets', 'audio', 'blackjack');
-const audioFiles = {
-  dealer_win: path.join(audioDir, 'dealer_win'),
-  player_win: path.join(audioDir, 'player_win'),
-  push: path.join(audioDir, 'push'),
+// VOICEVOX dialogue lines for blackjack outcomes
+const bjDialogueLines = {
+  dealer_win: [
+    "また私の勝ちですね！心配しないで、いつかコツを掴めますよ…たぶん。",
+    "ふふっ！カードは私の味方でした。戦略を変えてみたら？",
+    "あらら、ハウスの勝ちですね！…今回は！",
+    "残念でした！あなたのお金は私のものです。冗談ですよ…たぶん。",
+    "次はきっと勝てますよ！私のカードが強すぎただけです。",
+  ],
+  player_win: [
+    "ええっ、負けちゃった！ずるいよ！",
+    "私のプログラムにはこのレベルの敗北は想定されていません…。",
+    "そんな…こんなはずじゃ！私の連勝記録が…。",
+    "あら、計算を間違えたみたい。おめでとう…ございます。",
+    "カードが…裏切りました！",
+    "今回は運が良かったですね！次は負けませんよ、覚えておいて！",
+  ],
+  push: [
+    "引き分け！これは…予想外でしたね。また遊びましょう！",
+    "引き分けですか！面白いですね。確率がぴったり揃いました。",
+    "うーん、プッシュですね。今日のカードは本当にバランスが良い。",
+    "どちらも勝ちでも負けでもない。見方次第ですけどね。",
+    "誰も勝たず、誰も負けず。公平な結果ですね。",
+  ],
 };
 
 module.exports = {
@@ -66,58 +81,16 @@ module.exports = {
 
       if (voiceChannel) {
         try {
-          // Get the main connection and player from the music system
-          const connectionState = await connectIfNeeded(interaction, voiceChannel, { selfDeaf: false });
-          const connection = connectionState.connection || getVoiceConnection(interaction.guild.id);
-          const player = connectionState.player;
-
-          if (!connection || !player) {
-            throw new Error("Could not establish voice connection or find audio player.");
-          }
-
-          const me = voiceChannel.guild.members.me;
-          if (me?.voice?.deaf) await me.voice.setDeaf(false);
-          if (me?.voice?.mute) await me.voice.setMute(false);
-
-          const outcomeDir = audioFiles[finalGame.status];
-
-          if (fs.existsSync(outcomeDir)) {
-            const filesInDir = fs.readdirSync(outcomeDir).filter(f => f.endsWith('.mp3') || f.endsWith('.wav') || f.endsWith('.ogg'));
-            
-            if (filesInDir.length > 0) {
-              const randomFile = filesInDir[Math.floor(Math.random() * filesInDir.length)];
-              const filePath = path.join(outcomeDir, randomFile);
-
-              console.log(`[Blackjack] Playing audio file via MAIN player: ${filePath}`);
-              
-              const resource = createAudioResource(filePath);
-
-              // --- Interruption Handling ---
-              const wasPlayingMusic = player.state.status === AudioPlayerStatus.Playing;
-              const musicState = music.get(interaction.guild.id);
-
-              // Stop any currently playing music
-              player.stop(true);
-
-              // Play the blackjack sound
-              player.play(resource);
-              await entersState(player, AudioPlayerStatus.Playing, 5_000);
-
-              // Wait for the sound to finish
-              await entersState(player, AudioPlayerStatus.Idle, 60_000); // Wait up to 60s for sound to end
-
-              // --- Resume Logic ---
-              // If music was playing before and there's still a queue, play the next song.
-              if (wasPlayingMusic && musicState && musicState.queue.length > 0) {
-                 // The main player's 'idle' event listener in play.js will automatically handle this.
-                 // We just need to make sure the connection isn't destroyed.
-                 console.log("[Blackjack] Sound finished. Music queue will resume automatically.");
-              }
-            }
+          const lines = bjDialogueLines[finalGame.status];
+          if (lines && lines.length > 0) {
+            const randomLine = lines[Math.floor(Math.random() * lines.length)];
+            console.log(`[Blackjack TTS] Playing dialogue for: ${finalGame.status}`);
+            await speakTextToChannel(voiceChannel, randomLine, interaction.guildId);
           }
         } catch (audioError) {
-          console.error("[Blackjack] Error playing local audio file:", audioError);
-          await interaction.followUp({ content: "❌ Lỗi khi phát âm thanh của dealer.", ephemeral: true }).catch(() => {});
+          if (audioError.code !== 'ABORT_ERR' && audioError.name !== 'AbortError') {
+            console.error("[Blackjack TTS] Error:", audioError);
+          }
         }
       }
 

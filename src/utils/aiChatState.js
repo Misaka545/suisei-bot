@@ -1,7 +1,8 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { getLanguage, SUPPORTED_LANGUAGES } = require("./voiceSettings");
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
 
 const chatSessions = new Map(); // Map<channelId, { persona, memory, model, history[] }>
 const MAX_HISTORY_PAIRS = 8;
@@ -41,18 +42,27 @@ function toGeminiHistory(session) {
   }));
 }
 
-function systemInstructionFor(session) {
+function systemInstructionFor(session, guildId) {
   const bits = [session.persona];
   if (session.memory.length) bits.push("Long-term facts:\n- " + session.memory.join("\n- "));
+
+  if (guildId) {
+    const langCode = getLanguage(guildId);
+    if (langCode && langCode !== "auto") {
+      const langName = SUPPORTED_LANGUAGES[langCode] || langCode;
+      bits.push(`IMPORTANT: You MUST respond in ${langName}. Always use ${langName} regardless of the user's message language.`);
+    }
+  }
+
   return bits.join("\n\n");
 }
 
-async function aiGenerate(session, userMsg) {
+async function aiGenerate(session, userMsg, guildId) {
   const modelName = session.model || DEFAULT_GEMINI_MODEL;
 
   const model = genAI.getGenerativeModel({
     model: modelName,
-    systemInstruction: systemInstructionFor(session),
+    systemInstruction: systemInstructionFor(session, guildId),
   });
 
   const chat = model.startChat({

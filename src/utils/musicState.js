@@ -72,6 +72,10 @@ async function connectIfNeeded(interaction, voiceChannel, { selfDeaf = true } = 
       st.currentTrack = null;
       st.skipping = false;
     });
+
+    st.connection.on("error", (err) => {
+      console.warn("[VoiceConnection] Unhandled connection error:", err.message);
+    });
   }
 
   return st;
