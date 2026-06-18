@@ -265,7 +265,7 @@ module.exports = {
             if (amount === 1) {
                 // For single pulls, show a simple embed
                 const embed = new EmbedBuilder()
-                    .setTitle(`${banners[bannerKey].name} Result`)
+                    .setAuthor({ name: `${banners[bannerKey].name} Result` })
                     .setDescription(`You received: ${rarities[bestPull.rarity].emoji} **${bestPull.name}**`)
                     .setColor(rarities[bestPull.rarity].color)
                     .setFooter({ text: `5-Star Pity: ${pityCount}/${pity.five_star}${guaranteeText}` });
@@ -275,7 +275,7 @@ module.exports = {
                 // For 10-pulls, generate and show the grid image
                 const attachment = await createGachaResultImage(results, rarities);
                 const embed = new EmbedBuilder()
-                    .setTitle(`${banners[bannerKey].name} Results`)
+                    .setAuthor({ name: `${banners[bannerKey].name} Results` })
                     .setDescription(`Congratulations, ${interaction.user.username}! Here are your pulls:`)
                     .setColor(rarities[bestPull.rarity].color)
                     .setImage('attachment://gacha-result.png') // Refer to the attached image
@@ -304,7 +304,7 @@ module.exports = {
         } else if (subcommand === "pity") {
             const userState = ensureUser(userId);
             const embed = new EmbedBuilder()
-                .setTitle(`${interaction.user.username}'s Pity`)
+                .setAuthor({ name: `${interaction.user.username}'s Pity`, iconURL: interaction.user.displayAvatarURL() })
                 .setColor("#DDDDDD")
                 .addFields(
                     { name: "Featured Resonator", value: `Pity: **${userState.pity.character_featured}/${pity.five_star}**\nGuaranteed: **${userState.guarantee.character_featured ? 'Yes' : 'No'}**` },
@@ -333,7 +333,7 @@ module.exports = {
                     return `**${pullNum}.** ${rarities[item.rarity].emoji} **${item.name}**\n*└ Banner: ${banners[item.banner].name} ${pityText}*`;
                 }).join("\n\n");
                 return new EmbedBuilder()
-                    .setTitle(`${interaction.user.username}'s Gacha History`)
+                    .setAuthor({ name: `${interaction.user.username}'s Gacha History`, iconURL: interaction.user.displayAvatarURL() })
                     .setDescription(description)
                     .setColor("#0099ff")
                     .setFooter({ text: `Page ${page}/${totalPages} • Total Pulls: ${userHistory.length}` });
@@ -379,7 +379,7 @@ module.exports = {
             const five_star_log = history.filter(p => p.rarity === 5).map(p => `**${p.name}** at pity ${p.pity}`).join('\n') || 'None';
 
             const embed = new EmbedBuilder()
-                .setTitle(`${interaction.user.username}'s Gacha Stats`)
+                .setAuthor({ name: `${interaction.user.username}'s Gacha Stats`, iconURL: interaction.user.displayAvatarURL() })
                 .setColor("#FFD700")
                 .setDescription(`**Total Pulls:** ${history.length}\n**Avg. 5-Star Pity:** ${avg_pity}`)
                 .addFields(

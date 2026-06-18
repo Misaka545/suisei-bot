@@ -179,9 +179,9 @@ class BlackjackGame {
 
   getDisplay(hideDealerCard = true) {
     let result = "";
-    if (this.status === "player_win") result = "🎉 Bạn thắng!";
-    else if (this.status === "dealer_win") result = "😭 Dealer thắng!";
-    else if (this.status === "push") result = "🤝 Hòa!";
+    if (this.status === "player_win") result = "🎉 You win!";
+    else if (this.status === "dealer_win") result = "😭 Dealer wins!";
+    else if (this.status === "push") result = "🤝 Push!";
 
     return `
 **Dealer (${this.dealerStrategy.toUpperCase()} Mode):** ${this.dealerHand.toString(hideDealerCard)} (Score: ${hideDealerCard ? '??' : this.dealerHand.getScore()})

@@ -24,7 +24,7 @@ function spinReels() {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('slot')
-    .setDescription('Chơi máy đánh bạc để thử vận may của bạn!'),
+    .setDescription('Play the slot machine and test your luck!'),
   async execute(interaction) {
     try {
         await interaction.deferReply();
@@ -40,43 +40,43 @@ module.exports = {
             const symbol = reels[0];
             switch (symbol) {
                 case '💰':
-                    resultMessage = '🎉 **JACKPOT!** 🎉\nBạn đã trúng giải độc đắc!';
+                    resultMessage = '🎉 **JACKPOT!** 🎉\nYou hit the jackpot!';
                     resultColor = '#FFD700'; // Vàng gold
                     break;
                 case '💎':
-                    resultMessage = '💎 **BIG WIN!** 💎\nMột chiến thắng lớn!';
+                    resultMessage = '💎 **BIG WIN!** 💎\nA big victory!';
                     resultColor = '#00BFFF'; // Xanh dương
                     break;
                 case '🍀':
-                    resultMessage = '🍀 **LUCKY WIN!** 🍀\nRất may mắn!';
+                    resultMessage = '🍀 **LUCKY WIN!** 🍀\nVery lucky!';
                     resultColor = '#32CD32'; // Xanh lá
                     break;
                 case '🔔':
-                    resultMessage = '🔔 **You win!** 🔔\nBạn đã thắng!';
+                    resultMessage = '🔔 **You win!** 🔔\nYou won!';
                     resultColor = '#9370DB'; // Tím
                     break;
                 default: // Dành cho 🍇 và 🍒
-                    resultMessage = '🍇 **Small Win!** 🍒\nMột chiến thắng nhỏ!';
+                    resultMessage = '🍇 **Small Win!** 🍒\nA small win!';
                     resultColor = '#FFA500'; // Cam
                     break;
             }
         } else {
-            resultMessage = '💔 **You lost.** 💔\nChúc bạn may mắn lần sau!';
+            resultMessage = '💔 **You lost.** 💔\nBetter luck next time!';
             resultColor = '#808080'; // Xám
         }
 
         const embed = new EmbedBuilder()
             .setColor(resultColor)
-            .setTitle('🎰 Slot Machine 🎰')
-            .setDescription(`Vòng quay của ${interaction.user.username}:\n\n${reelsDisplay}`)
-            .addFields({ name: 'Kết quả', value: resultMessage })
+            .setAuthor({ name: 'Slot Machine' })
+            .setDescription(`${interaction.user.username}'s spin:\n\n${reelsDisplay}`)
+            .addFields({ name: 'Result', value: resultMessage })
             .setTimestamp();
 
         await interaction.editReply({ embeds: [embed] });
 
     } catch (err) {
       console.error('Lỗi trong lệnh /slot:', err);
-      await interaction.editReply('❌ Đã có lỗi xảy ra khi quay máy đánh bạc.');
+      await interaction.editReply('An error occurred while spinning the slot machine.');
     }
   }
 };

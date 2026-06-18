@@ -14,10 +14,10 @@ module.exports = {
     if (sub === "set") {
       const name = interaction.options.getString("name");
       s.model = name;
-      return interaction.reply(`🧠 Gemini model set to \`${name}\`.`);
+      return interaction.reply(`Gemini model set to \`${name}\`.`);
     }
     if (sub === "view") {
-      return interaction.reply(`🧠 Current Gemini model: \`${s.model}\``);
+      return interaction.reply(`Current Gemini model: \`${s.model}\``);
     }
   },
 };

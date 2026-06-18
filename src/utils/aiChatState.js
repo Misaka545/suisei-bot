@@ -1,5 +1,7 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { getLanguage, SUPPORTED_LANGUAGES } = require("./voiceSettings");
+const { canCallGemini, recordGeminiCall, remainingCalls } = require("./geminiRateLimiter");
+const { ollamaChat, isOllamaAvailable, OLLAMA_MODEL } = require("../services/ollamaService");
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
@@ -58,30 +60,66 @@ function systemInstructionFor(session, guildId) {
 }
 
 async function aiGenerate(session, userMsg, guildId) {
-  const modelName = session.model || DEFAULT_GEMINI_MODEL;
+  const systemPrompt = systemInstructionFor(session, guildId);
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    systemInstruction: systemInstructionFor(session, guildId),
-  });
+  if (canCallGemini()) {
+    try {
+      const modelName = session.model || DEFAULT_GEMINI_MODEL;
+      recordGeminiCall();
 
-  const chat = model.startChat({
-    history: toGeminiHistory(session),
-    generationConfig: {
-      temperature: 0.7,
-      topP: 0.95,
-      topK: 40,
-      maxOutputTokens: 2048,
-    },
-  });
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemPrompt,
+      });
 
-  const res = await chat.sendMessage(userMsg);
-  const text = res?.response?.text?.() || "";
+      const chat = model.startChat({
+        history: toGeminiHistory(session),
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.95,
+          topK: 40,
+          maxOutputTokens: 2048,
+        },
+      });
 
-  pushHistory(session, "user", userMsg);
-  pushHistory(session, "assistant", text);
+      const res = await chat.sendMessage(userMsg);
+      const text = res?.response?.text?.() || "";
 
-  return text;
+      pushHistory(session, "user", userMsg);
+      pushHistory(session, "assistant", text);
+
+      console.log(`[AI] Gemini response OK (${remainingCalls()} calls remaining)`);
+      return text;
+    } catch (err) {
+      const msg = err?.message || String(err);
+      if (err?.status === 429 || /quota|rate.?limit|resource.?exhaust/i.test(msg)) {
+        console.warn(`[AI] Gemini rate-limited at runtime, falling back to Ollama...`);
+      } else {
+        console.error(`[AI] Gemini error: ${msg} — trying Ollama fallback...`);
+      }
+    }
+  } else {
+    console.warn(`[AI] Gemini rate limited (${remainingCalls()} remaining) — using Ollama (${OLLAMA_MODEL})`);
+  }
+
+  // ── Fallback: Ollama (Qwen 3.6 35B) ──
+  try {
+    const available = await isOllamaAvailable();
+    if (!available) {
+      throw new Error("Ollama is not reachable");
+    }
+
+    console.log(`[AI] Using Ollama fallback: ${OLLAMA_MODEL}`);
+    const text = await ollamaChat(systemPrompt, session.history, userMsg);
+
+    pushHistory(session, "user", userMsg);
+    pushHistory(session, "assistant", text);
+
+    return text;
+  } catch (ollamaErr) {
+    console.error(`[AI] Ollama fallback also failed: ${ollamaErr.message}`);
+    throw new Error("Both Gemini and Ollama are unavailable. Please try again later.");
+  }
 }
 
 module.exports = {

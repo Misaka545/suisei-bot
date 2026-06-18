@@ -4,25 +4,33 @@ const { getWaifuImage } = require("../../services/imageService");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('waifu')
-    .setDescription('Gửi một ảnh waifu (SFW).'),
+    .setDescription('Send a random waifu image (SFW) from Danbooru.'),
   async execute(interaction) {
     try {
       await interaction.deferReply();
-      const imageUrl = await getWaifuImage();
+      const result = await getWaifuImage();
+
+      if (!result) {
+        return interaction.editReply('No image found. Please try again!');
+      }
+
+      const characterName = result.character.replace(/_/g, ' ') || 'Original';
 
       await interaction.editReply({
-        content: '💖 Waifu của bạn đây:',
         embeds: [
           {
-            title: 'Random Waifu',
-            image: { url: imageUrl },
-            footer: { text: 'Nguồn: waifu.pics' }
+            author: { name: 'Random Waifu' },
+            description: `**Character:** ${characterName}`,
+            image: { url: result.url },
+            color: 0xFF69B4,
+            footer: { text: `Source: Danbooru #${result.id}` },
+            url: `https://danbooru.donmai.us/posts/${result.id}`
           }
         ]
       });
     } catch (err) {
       console.error('Error in /waifu command:', err);
-      await interaction.editReply('❌ Có lỗi khi gọi API. Thử lại sau nhé.');
+      await interaction.editReply('An error occurred while calling the API. Please try again later.');
     }
   }
 };

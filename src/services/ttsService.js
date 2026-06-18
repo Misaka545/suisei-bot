@@ -1,5 +1,5 @@
 // src/services/ttsService.js
-// TTS Service — powered by VOICEVOX engine
+// TTS Service — VOICEVOX (Japanese) + Style-Bert-VITS2 (English)
 
 const {
   entersState,
@@ -8,9 +8,11 @@ const {
   AudioPlayerStatus,
 } = require("@discordjs/voice");
 const { ChannelType } = require("discord.js");
-const { synthesize } = require("./voicevoxService");
+const { synthesize: voicevoxSynthesize } = require("./voicevoxService");
 const { getSpeakerId } = require("../utils/voiceSettings");
 const { connectIfNeeded, music } = require("../utils/musicState");
+
+
 
 let _player = null;
 function getPlayer() {
@@ -25,14 +27,15 @@ function getPlayer() {
 }
 
 /**
- * Generate a Discord AudioResource from text using VOICEVOX.
+ * Generate a Discord AudioResource from text.
+ * Routes to VOICEVOX.
  * @param {string} text - Text to speak
  * @param {string} [guildId] - Guild ID for per-guild speaker settings
  * @returns {Promise<import("@discordjs/voice").AudioResource>}
  */
 async function ttsResourceFromText(text, guildId) {
   const speakerId = guildId ? getSpeakerId(guildId) : getSpeakerId("default");
-  return synthesize(text, speakerId);
+  return voicevoxSynthesize(text, speakerId);
 }
 
 /**
@@ -43,8 +46,6 @@ async function ttsResourceFromText(text, guildId) {
 async function speakResourceToChannel(voiceChannel, resource) {
   const guildId = voiceChannel.guild.id;
   
-  // Use musicState's connection manager to ensure we don't desync connections.
-  // selfDeaf: false so that VA can still listen if it's active.
   const st = await connectIfNeeded({ guild: { id: guildId, voiceAdapterCreator: voiceChannel.guild.voiceAdapterCreator } }, voiceChannel, { selfDeaf: false });
   const connection = st.connection;
   if (!connection) throw new Error("Could not establish voice connection.");

@@ -1,24 +1,14 @@
 const { SlashCommandBuilder } = require("discord.js");
-const { getHentaiImage } = require("../../services/imageService");
-
-// KHÔNG CẦN hàm delay ở đây nữa
+const { getHentaiImages } = require("../../services/imageService");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('multihentai')
-    .setDescription('Gửi 3 ảnh/gif hentai. Sẽ random nếu không chọn type.') // Cập nhật mô tả
-    .addStringOption(option =>
-      option.setName('type')
-        .setDescription('Chọn loại kết quả bạn muốn (mặc định là random)')
-        .setRequired(false)
-        .addChoices(
-          { name: 'Ảnh (Image)', value: 'image' },
-          { name: 'GIF (Animated)', value: 'gif' }
-        )),
+    .setDescription('Send 3 hentai images from Danbooru.'),
   async execute(interaction) {
     if (!interaction.channel || !interaction.channel.nsfw) {
       return interaction.reply({
-        content: '❌ Lệnh này chỉ dùng được trong **NSFW channel**.',
+        content: 'This command can only be used in an **NSFW channel**.',
         ephemeral: true
       });
     }
@@ -26,44 +16,29 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      const userType = interaction.options.getString('type');
-      const promises = [];
+      const results = await getHentaiImages(false, 3);
 
-      // Quay trở lại vòng lặp 3 lần
-      for (let i = 0; i < 3; i++) {
-        let isGif;
-        if (userType) {
-          isGif = (userType === 'gif');
-        } else {
-          isGif = Math.random() < 0.5;
-        }
-        // Thêm promise vào mảng để thực thi song song
-        promises.push(getHentaiImage(isGif));
+      if (results.length === 0) {
+        return interaction.editReply('No results found. The API may be experiencing issues.');
       }
 
-      // Sử dụng Promise.all để chạy tất cả các yêu cầu cùng lúc (không delay)
-      const results = await Promise.all(promises);
-      const validUrls = results.filter(url => url);
-
-      if (validUrls.length === 0) {
-        return interaction.editReply(`⚠️ Không tìm thấy kết quả nào. API có thể đang gặp sự cố.`);
-      }
-
-      const embeds = validUrls.map(url => ({
-        image: { url: url },
-        footer: { text: 'Nguồn: waifu.im' } // Thêm footer để ghi nguồn
+      const embeds = results.map((result, i) => ({
+        author: { name: `NSFW Hentai ${i+1}` },
+        description: `**Character:** ${result.character.replace(/_/g, ' ') || 'Original'}`,
+        image: { url: result.url },
+        color: 0xFF0000,
+        footer: { text: `Danbooru #${result.id}` },
+        url: `https://danbooru.donmai.us/posts/${result.id}`
       }));
-      
-      const contentMessage = `🔞 ${validUrls.length} kết quả hentai cho bạn:`;
 
       await interaction.editReply({
-        content: contentMessage,
+        content: `${results.length} hentai results for you:`,
         embeds: embeds
       });
 
     } catch (err) {
       console.error('Error in /multihentai command:', err);
-      await interaction.editReply('❌ Có lỗi nghiêm trọng khi gọi API. Thử lại sau nhé.');
+      await interaction.editReply('An error occurred while calling the API. Please try again later.');
     }
   }
 };

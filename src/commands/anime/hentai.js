@@ -4,19 +4,11 @@ const { getHentaiImage } = require("../../services/imageService");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('hentai')
-    .setDescription('Gửi ảnh hoặc gif hentai. Sẽ random nếu không chọn type.')
-    .addStringOption(option =>
-      option.setName('type')
-        .setDescription('Chọn loại kết quả bạn muốn (mặc định là random)')
-        .setRequired(false) // Now optional
-        .addChoices(
-          { name: 'Ảnh (Image)', value: 'image' },
-          { name: 'GIF (Animated)', value: 'gif' }
-        )),
+    .setDescription('Send a hentai image from Danbooru.'),
   async execute(interaction) {
     if (!interaction.channel || !interaction.channel.nsfw) {
       return interaction.reply({
-        content: '❌ Lệnh này chỉ dùng được trong **NSFW channel**.',
+        content: 'This command can only be used in an **NSFW channel**.',
         ephemeral: true
       });
     }
@@ -24,40 +16,30 @@ module.exports = {
     try {
       await interaction.deferReply();
 
-      const userType = interaction.options.getString('type');
-      let isGif;
+      const result = await getHentaiImage(false);
 
-      if (userType) {
-        // If user chose a type, use it
-        isGif = (userType === 'gif');
-      } else {
-        // If user did not choose, randomize it
-        isGif = Math.random() < 0.5;
+      if (!result) {
+        return interaction.editReply(`No results found.`);
       }
 
-      const imageUrl = await getHentaiImage(isGif);
-
-      if (!imageUrl) {
-        const finalType = userType || (isGif ? 'gif' : 'image');
-        return interaction.editReply(`⚠️ Không tìm thấy kết quả nào cho loại '${finalType}'.`);
-      }
-
-      const finalTypeDisplay = userType || (isGif ? 'random GIF' : 'random Image');
-      const contentMessage = `🔞 Hentai (${finalTypeDisplay}) cho bạn:`;
+      const characterName = result.character.replace(/_/g, ' ') || 'Original';
 
       await interaction.editReply({
-        content: contentMessage,
         embeds: [
           {
-            title: 'NSFW Hentai',
-            image: { url: imageUrl },
-            footer: { text: 'Nguồn: waifu.im (NSFW)' }
+            author: { name: 'NSFW Hentai' },
+            title: `Hentai Image for you`,
+            description: `**Character:** ${characterName}`,
+            image: { url: result.url },
+            color: 0xFF0000,
+            footer: { text: `Source: Danbooru #${result.id} (NSFW)` },
+            url: `https://danbooru.donmai.us/posts/${result.id}`
           }
         ]
       });
     } catch (err) {
       console.error('Error in /hentai command:', err);
-      await interaction.editReply('❌ Có lỗi nghiêm trọng khi gọi API. Thử lại sau nhé.');
+      await interaction.editReply('An error occurred while calling the API. Please try again later.');
     }
   }
 };

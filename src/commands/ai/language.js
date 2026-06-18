@@ -72,11 +72,11 @@ module.exports = {
       const currentLang = getLanguage(interaction.guildId);
 
       const embed = new EmbedBuilder()
-        .setTitle("🌐 Supported Languages")
+        .setAuthor({ name: "Supported Languages" })
         .setDescription(lines.join("\n"))
         .setColor("#3b82f6")
         .setFooter({
-          text: `Current: ${SUPPORTED_LANGUAGES[currentLang] || currentLang} (${currentLang})`,
+          text: `Current: ${SUPPORTED_LANGUAGES[currentLang] || currentLang} (${currentLang})`
         });
 
       await interaction.reply({ embeds: [embed], ephemeral: true });

@@ -10,34 +10,34 @@ const MAX_DELAY_MS = 31536000000;
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('schedule')
-    .setDescription('Lên lịch gửi tin nhắn (Lưu trữ an toàn).')
+    .setDescription('Schedule a message to be sent (safely stored).')
     .addChannelOption(option =>
       option.setName('channel')
-        .setDescription('Kênh gửi tin nhắn.')
+        .setDescription('Channel to send the message.')
         .addChannelTypes(ChannelType.GuildText)
         .setRequired(true))
     .addStringOption(option =>
       option.setName('date')
-        .setDescription('Ngày (YYYY-MM-DD). Ví dụ: 2025-12-31')
+        .setDescription('Date (YYYY-MM-DD). Example: 2025-12-31')
         .setRequired(true))
     .addStringOption(option =>
       option.setName('time')
-        .setDescription('Giờ (HH:MM). Ví dụ: 19:30')
+        .setDescription('Time (HH:MM). Example: 19:30')
         .setRequired(true))
     .addStringOption(option =>
       option.setName('message')
-        .setDescription('Nội dung tin nhắn.')
+        .setDescription('Message content.')
         .setRequired(false))
     .addAttachmentOption(option =>
       option.setName('attachment')
-        .setDescription('Tệp đính kèm (Ảnh/Video).')
+        .setDescription('Attachment (Image/Video).')
         .setRequired(false)),
 
   async execute(interaction) {
     // Check quyền
     if (!interaction.member.permissions.has('ManageChannels')) {
         return interaction.reply({ 
-            content: '❌ Cần quyền ManageChannels.', 
+            content: 'ManageChannels permission required.', 
             ...ephemeralOpt(true) 
         });
     }
@@ -51,7 +51,7 @@ module.exports = {
 
         if (!message && !attachment) {
             return interaction.reply({ 
-                content: '❌ Cần nhập tin nhắn hoặc đính kèm file.', 
+                content: 'Please provide a message or attach a file.', 
                 ...ephemeralOpt(true) 
             });
         }
@@ -59,7 +59,7 @@ module.exports = {
         // Validate ngày giờ
         if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || !/^\d{2}:\d{2}$/.test(timeStr)) {
             return interaction.reply({ 
-                content: '❌ Sai định dạng. Dùng YYYY-MM-DD và HH:MM.', 
+                content: 'Invalid format. Use YYYY-MM-DD and HH:MM.', 
                 ...ephemeralOpt(true) 
             });
         }
@@ -68,9 +68,9 @@ module.exports = {
         const now = Date.now();
         const targetTime = scheduleDate.getTime();
 
-        if (isNaN(targetTime)) return interaction.reply({ content: '❌ Ngày giờ không hợp lệ.', ...ephemeralOpt(true) });
-        if (targetTime <= now) return interaction.reply({ content: '❌ Thời gian phải ở tương lai.', ...ephemeralOpt(true) });
-        if (targetTime - now > MAX_DELAY_MS) return interaction.reply({ content: '❌ Lịch quá xa.', ...ephemeralOpt(true) });
+        if (isNaN(targetTime)) return interaction.reply({ content: 'Invalid date/time.', ...ephemeralOpt(true) });
+        if (targetTime <= now) return interaction.reply({ content: 'Time must be in the future.', ...ephemeralOpt(true) });
+        if (targetTime - now > MAX_DELAY_MS) return interaction.reply({ content: 'Schedule is too far ahead.', ...ephemeralOpt(true) });
 
         // --- TẠO DỮ LIỆU TASK ---
         const task = {
@@ -89,12 +89,12 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setColor('#57F287')
-            .setTitle('✅ Đã lưu lịch trình!')
-            .setDescription(`Tin nhắn sẽ được gửi ngay cả khi bot khởi động lại.`)
+            .setAuthor({ name: 'Schedule saved!' })
+            .setDescription(`The message will be sent even if the bot restarts.`)
             .addFields(
-                { name: 'Gửi tới', value: `<#${channel.id}>`, inline: true },
-                { name: 'Thời gian', value: `<t:${Math.floor(targetTime / 1000)}:F>`, inline: true },
-                { name: 'Nội dung', value: message ? (message.length > 50 ? message.substring(0, 47) + '...' : message) : '*(File)*' }
+                { name: 'Send to', value: `<#${channel.id}>`, inline: true },
+                { name: 'Time', value: `<t:${Math.floor(targetTime / 1000)}:F>`, inline: true },
+                { name: 'Content', value: message ? (message.length > 50 ? message.substring(0, 47) + '...' : message) : '*(File)*' }
             )
             .setFooter({ text: `ID: ${task.id}` });
 
@@ -102,7 +102,7 @@ module.exports = {
 
     } catch (err) {
       console.error('Schedule Error:', err);
-      await interaction.reply({ content: '❌ Lỗi hệ thống.', ...ephemeralOpt(true) });
+      await interaction.reply({ content: 'System error.', ...ephemeralOpt(true) });
     }
   }
 };

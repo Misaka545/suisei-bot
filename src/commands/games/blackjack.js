@@ -50,7 +50,7 @@ module.exports = {
   async execute(interaction) {
     if (activeGames.has(interaction.channelId)) {
       return interaction.reply({
-        content: "Một trò chơi Blackjack đang diễn ra trong kênh này. Hãy hoàn thành trò chơi đó trước!",
+        content: "A Blackjack game is already in progress in this channel. Finish that game first!",
         ephemeral: true,
       });
     }
@@ -69,7 +69,7 @@ module.exports = {
 
     const endGame = async (finalGame, currentInteraction) => {
       row.components.forEach(c => c.setDisabled(true));
-      const finalDisplayContent = `Trò chơi Blackjack cho ${currentInteraction.user.username} đã kết thúc!\n\n` + finalGame.getDisplay(false);
+      const finalDisplayContent = `Blackjack game for ${currentInteraction.user.username} has ended!\n\n` + finalGame.getDisplay(false);
 
       await currentInteraction.editReply({
           content: finalDisplayContent,
@@ -98,7 +98,7 @@ module.exports = {
     };
 
     const initialMessage = await interaction.editReply({
-      content: `Bắt đầu Blackjack cho ${interaction.user.username} (Dealer: ${game.dealerStrategy.toUpperCase()})!\n\n` + game.getDisplay(true),
+      content: `Starting Blackjack for ${interaction.user.username} (Dealer: ${game.dealerStrategy.toUpperCase()})!\n\n` + game.getDisplay(true),
       components: [row],
     });
 
@@ -128,7 +128,7 @@ module.exports = {
         collector.stop("game_ended");
       } else {
         await buttonInteraction.editReply({
-          content: `Bắt đầu Blackjack cho ${interaction.user.username} (Dealer: ${currentGame.dealerStrategy.toUpperCase()})!\n\n` + currentGame.getDisplay(true),
+          content: `Starting Blackjack for ${interaction.user.username} (Dealer: ${currentGame.dealerStrategy.toUpperCase()})!\n\n` + currentGame.getDisplay(true),
           components: [row],
         });
       }

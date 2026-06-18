@@ -37,7 +37,7 @@ module.exports = {
         if (me?.voice?.mute) await me.voice.setMute(false);
         startListening(st.connection, voiceChannel);
 
-        await interaction.editReply("🎙️ **Voice Assistant started!** I'm listening to the voice channel...");
+        await interaction.editReply("🎙️ Voice Assistant started!");
       } catch (err) {
         console.error("[VA join error]", err);
         await interaction.editReply("❌ Failed to start Voice Assistant.");
@@ -46,7 +46,7 @@ module.exports = {
       await interaction.deferReply();
       stopListening(guildId);
       disconnectGuild(guildId);
-      await interaction.editReply("🔇 **Voice Assistant stopped.** I've stopped listening.");
+      await interaction.editReply("🔇 Voice Assistant stopped.");
     }
   },
 };

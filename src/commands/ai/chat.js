@@ -31,7 +31,7 @@ module.exports = {
       reply = await aiGenerate(session, message, interaction.guildId);
     } catch (llmError) {
       console.error("[Chat] LLM error:", llmError);
-      await editOrFollowLong(interaction, "❌ Lỗi AI tạo câu trả lời.", { ephemeral: true });
+      await editOrFollowLong(interaction, "❌ AI failed to generate a response.", { ephemeral: true });
       return;
     }
 
@@ -45,7 +45,7 @@ module.exports = {
 
       if (!voiceChannel) {
         await interaction.followUp({
-          content: "❌ Để tôi nói, bạn cần ở trong một kênh thoại!",
+          content: "❌ You need to be in a voice channel for me to speak!",
           ephemeral: true,
         }).catch(() => {});
         return;
@@ -53,7 +53,7 @@ module.exports = {
 
       if (voiceChannel.type === ChannelType.GuildStageVoice && member.voice.suppress) {
         await interaction.followUp({
-          content: "🎙️ Bạn đang là **Audience** trong Stage. Để tôi nói, hãy **Request to Speak** trước.",
+          content: "🎙️ You are an **Audience** in a Stage channel. Please **Request to Speak** first.",
           ephemeral: true,
         }).catch(() => {});
         return;
@@ -79,7 +79,7 @@ module.exports = {
       } catch (ttsError) {
         console.error("[Chat] TTS error:", ttsError);
         await interaction.followUp({
-          content: `❌ Lỗi khi phát giọng nói: ${ttsError.message}`,
+          content: `❌ Error playing voice: ${ttsError.message}`,
           ephemeral: true,
         }).catch(() => {});
       }

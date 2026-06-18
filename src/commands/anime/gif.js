@@ -32,10 +32,10 @@ const categoryChoices = [
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('gif')
-    .setDescription('Gửi một ảnh/GIF anime theo chủ đề được chọn.')
+    .setDescription('Send an anime GIF/image based on the selected category.')
     .addStringOption(option =>
       option.setName('category')
-        .setDescription('Chọn một chủ đề từ danh sách')
+        .setDescription('Choose a category from the list')
         .setRequired(true)
         .addChoices(...categoryChoices) // Thêm 25 lựa chọn vào lệnh
     ),
@@ -47,24 +47,21 @@ module.exports = {
       const result = await getGifImage(category);
 
       if (!result) {
-        return interaction.editReply(`⚠️ Không tìm thấy kết quả nào cho chủ đề '${category}'.`);
+        return interaction.editReply(`No results found for category '${category}'.`);
       }
 
-      const contentMessage = `🎞️ Kết quả cho chủ đề '${category}':`;
-
       await interaction.editReply({
-        content: contentMessage,
         embeds: [
           {
-            title: `Anime GIF/Image: ${category}`,
+            author: { name: `Anime GIF: ${category}` },
             image: { url: result.url },
-            footer: { text: `Nguồn: nekos.best - Anime: ${result.anime}` }
+            footer: { text: `Source: nekos.best - Anime: ${result.anime}` }
           }
         ]
       });
     } catch (err) {
       console.error('Error in /gif command:', err);
-      await interaction.editReply('❌ Có lỗi nghiêm trọng khi gọi API. Thử lại sau nhé.');
+      await interaction.editReply('A critical error occurred while calling the API. Please try again later.');
     }
   }
 };

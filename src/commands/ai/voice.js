@@ -82,11 +82,11 @@ module.exports = {
 
         const generateEmbed = (page) => {
           return new EmbedBuilder()
-            .setTitle("🎤 Available VOICEVOX Speakers")
+            .setAuthor({ name: "Available VOICEVOX Speakers" })
             .setDescription(pages[page])
             .setColor("#7c3aed")
             .setFooter({
-              text: `Current server voice: ID ${currentSpeaker} • Use /voice set <id> to change • Page ${page + 1}/${pages.length}`,
+              text: `Current server voice: ID ${currentSpeaker} • Use /voice set <id> to change • Page ${page + 1}/${pages.length}`
             });
         };
 
@@ -120,7 +120,7 @@ module.exports = {
 
           collector.on("collect", async (i) => {
             if (i.user.id !== interaction.user.id) {
-              return i.reply({ content: "❌ Bạn không phải là người gọi lệnh này!", ephemeral: true });
+              return i.reply({ content: "❌ You are not the one who used this command!", ephemeral: true });
             }
 
             if (i.customId === "voice_list_prev" && currentPage > 0) {
@@ -190,7 +190,7 @@ module.exports = {
 
       if (!voiceChannel) {
         return interaction.reply({
-          content: "❌ Bạn cần ở trong voice channel để nghe thử giọng!",
+          content: "❌ You need to be in a voice channel to preview a voice!",
           ephemeral: true,
         });
       }

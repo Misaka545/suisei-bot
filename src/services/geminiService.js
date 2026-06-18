@@ -1,6 +1,7 @@
 // src/services/geminiService.js
 const fetch = global.fetch || ((...a)=>import('node-fetch').then(({default:f})=>f(...a)));
 const API_KEY = process.env.GOOGLE_API_KEY;
+const { canCallGemini, recordGeminiCall, remainingCalls } = require("../utils/geminiRateLimiter");
 
 const PREFERRED_STT_MODELS = [
   "gemini-3.1-flash-lite",
@@ -41,16 +42,29 @@ async function callGeminiV1GenerateContent(model, wavBuffer) {
 async function geminiTranscribe(wavBuffer) {
   if (!API_KEY) throw new Error("Missing GOOGLE_API_KEY");
   if (!wavBuffer?.length) return "";
+
+  if (!canCallGemini()) {
+    console.warn(`[STT] Gemini rate limited (${remainingCalls()} calls remaining) — skipping transcription.`);
+    return "";
+  }
+
   let lastErr;
   const tried = new Set();
   for (const raw of PREFERRED_STT_MODELS) {
     const m = normalizeModel(raw);
     if (!m || tried.has(m)) continue;
     tried.add(m);
+
+    if (!canCallGemini()) {
+      console.warn(`[STT] Gemini rate limited before trying model ${m} — aborting.`);
+      break;
+    }
+
     try {
+      recordGeminiCall();
       const text = await callGeminiV1GenerateContent(m, wavBuffer);
       if (text) {
-        if (m !== process.env.STT_MODEL) console.log(`[STT] Using model: ${m}`);
+        if (m !== process.env.STT_MODEL) console.log(`[STT] Using model: ${m} (${remainingCalls()} calls remaining)`);
         return text;
       }
       console.warn(`[STT] model ${m} returned empty text, trying next…`);

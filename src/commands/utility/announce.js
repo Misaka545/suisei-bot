@@ -4,15 +4,15 @@ const { ephemeralOpt } = require("../../utils/discordHelpers");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('announce')
-    .setDescription('Gửi thông báo (hỗ trợ Ảnh và Video) ra kênh hiện tại.')
+    .setDescription('Send an announcement (supports Images and Videos) to the current channel.')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption(option =>
       option.setName('message')
-        .setDescription('Nội dung thông báo. Dùng "\\n" để xuống dòng. Gõ @everyone để ping.')
+        .setDescription('Announcement content. Use "\\n" for line breaks. Type @everyone to ping.')
         .setRequired(true))
     .addAttachmentOption(option =>
       option.setName('file') // Đổi tên từ 'image' sang 'file' cho đúng nghĩa
-        .setDescription('Đính kèm Ảnh hoặc Video cho thông báo.')
+        .setDescription('Attach an Image or Video to the announcement.')
         .setRequired(false)),  
   
   async execute(interaction) {
@@ -54,14 +54,14 @@ module.exports = {
 
         // Phản hồi xác nhận (đã fix lỗi crash "Already acknowledged")
         await interaction.editReply({
-            content: '✅ Đã gửi thông báo thành công!',
+            content: 'Announcement sent successfully!',
             ...ephemeralOpt(true)
         });
 
     } catch (err) {
       console.error('Lỗi trong lệnh /announce:', err);
       
-      const errorMsg = { content: '❌ Đã có lỗi xảy ra khi thực hiện lệnh.', ...ephemeralOpt(true) };
+      const errorMsg = { content: 'An error occurred while executing the command.', ...ephemeralOpt(true) };
 
       // Xử lý lỗi an toàn (tránh crash app nếu defer thất bại cục bộ)
       try {
