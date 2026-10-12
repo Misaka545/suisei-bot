@@ -64,7 +64,7 @@ function setSpeakerId(guildId, speakerId) {
 
 const SUPPORTED_LANGUAGES = {
   auto: "Auto-detect (respond in the user's language)",
-  vi: "Tiếng Việt",
+  vi: "Vietnamese",
   en: "English",
   ja: "日本語 (Japanese)",
 };

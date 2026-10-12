@@ -6,16 +6,16 @@ const { getAllTasks, removeTasks } = require('../utils/schedulerUtils');
 const { autoUpdateYtdlp } = require('../utils/youtubeHelpers');
 
 function startScheduledTasks(client) {
-    console.log('⏰ Hệ thống lập lịch đã khởi động.');
+    console.log('⏰ Scheduled tasks started.');
 
     // Tự động kiểm tra và cập nhật yt-dlp hàng ngày lúc 04:00 sáng
     cron.schedule('0 4 * * *', async () => {
         try {
-            console.log('⏰ [Cron] Đang kiểm tra cập nhật yt-dlp định kỳ...');
+            console.log('⏰ [Cron] Checking for periodic yt-dlp updates...');
             const res = await autoUpdateYtdlp();
-            console.log(`✅ [Cron] Kết quả cập nhật yt-dlp: ${res?.message || 'Hoàn tất'}`);
+            console.log(`✅ [Cron] yt-dlp update result: ${res?.message || 'Completed'}`);
         } catch (err) {
-            console.error('❌ Lỗi khi tự động cập nhật yt-dlp:', err);
+            console.error('❌ Error during automatic yt-dlp update:', err);
         }
     }, {
         scheduled: true,
@@ -28,24 +28,24 @@ function startScheduledTasks(client) {
             const VIDEO_URL = process.env.SCHEDULED_VIDEO_PATH;
             
             if (!SUNDAY_CHANNEL_ID || !VIDEO_URL) {
-                return console.warn('⚠️ SCHEDULED_CHANNEL_ID hoặc SCHEDULED_VIDEO_PATH chưa được cấu hình.');
+                return console.warn('⚠️ SCHEDULED_CHANNEL_ID or SCHEDULED_VIDEO_PATH is not configured.');
             }
 
-            console.log('🔄 Đang thực hiện task Chủ nhật...');
+            console.log('🔄 Executing Sunday task...');
 
             const channel = await client.channels.fetch(SUNDAY_CHANNEL_ID).catch(() => null);
 
             if (channel) {
                 await channel.send({
-                    content: "Cuối tuần vui vẻ! 🥳",
+                    content: "Happy weekend! 🥳",
                     files: [VIDEO_URL]
                 });
-                console.log('✅ Đã gửi video Sunday thành công.');
+                console.log('✅ Sunday video sent successfully.');
             } else {
-                console.warn(`⚠️ Không tìm thấy kênh ${SUNDAY_CHANNEL_ID} cho task Chủ nhật.`);
+                console.warn(`⚠️ Channel ${SUNDAY_CHANNEL_ID} not found for Sunday task.`);
             }
         } catch (err) {
-            console.error('❌ Lỗi khi gửi video Chủ nhật:', err);
+            console.error('❌ Error sending Sunday video:', err);
         }
     }, { 
         scheduled: true, 
@@ -60,7 +60,7 @@ function startScheduledTasks(client) {
 
         if (dueTasks.length === 0) return;
 
-        console.log(`🚀 Tìm thấy ${dueTasks.length} task cần thực hiện.`);
+        console.log(`🚀 Found ${dueTasks.length} task(s) to execute.`);
         const executedTaskIds = [];
 
         for (const task of dueTasks) {
@@ -81,10 +81,10 @@ function startScheduledTasks(client) {
                     await channel.send(payload);
                     console.log(`✅ Task ${task.id} executed.`);
                 } else {
-                    console.warn(`⚠️ Không tìm thấy kênh cho task ${task.id}, sẽ xóa task.`);
+                    console.warn(`⚠️ Channel not found for task ${task.id}, deleting task.`);
                 }
             } catch (err) {
-                console.error(`❌ Lỗi khi chạy task ${task.id}:`, err);
+                console.error(`❌ Error executing task ${task.id}:`, err);
             } finally {
                 executedTaskIds.push(task.id);
             }

@@ -130,7 +130,7 @@ async function getGifImage(category) {
       anime: first.anime_name || 'Unknown'
     };
   } catch (error) {
-    console.error(`Lỗi API Nekos.best cho danh mục '${category}':`, error.message);
+    console.error(`Nekos.best API error for category '${category}':`, error.message);
     throw error; // Ném lỗi ra để lệnh có thể xử lý
   }
 }

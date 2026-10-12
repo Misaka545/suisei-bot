@@ -59,7 +59,7 @@ module.exports = {
         });
 
     } catch (err) {
-      console.error('Lỗi trong lệnh /announce:', err);
+      console.error('Error in /announce command:', err);
       
       const errorMsg = { content: 'An error occurred while executing the command.', ...ephemeralOpt(true) };
 

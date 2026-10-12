@@ -19,7 +19,7 @@ function getAllTasks() {
         const data = fs.readFileSync(FILE_PATH, 'utf-8');
         return JSON.parse(data);
     } catch (err) {
-        console.error('Lỗi đọc file schedule:', err);
+        console.error('Error reading schedule file:', err);
         return [];
     }
 }
@@ -42,7 +42,7 @@ function removeTasks(taskIds) {
         tasks = tasks.filter(t => !idSet.has(t.id));
         fs.writeFileSync(FILE_PATH, JSON.stringify(tasks, null, 2), 'utf-8');
     } catch (err) {
-        console.error('Lỗi ghi file schedule:', err);
+        console.error('Error writing schedule file:', err);
     }
 }
 

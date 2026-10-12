@@ -24,7 +24,7 @@ function loadAllCommandJSON(commandsDir) {
           const json = mod.data.toJSON();
           results.push({ name: json.name, json, file: full });
         } else {
-          console.warn(`⚠️ Bỏ qua (không hợp lệ): ${full}`);
+          console.warn(`⚠️ Skipping (invalid): ${full}`);
         }
       }
     }
@@ -68,17 +68,17 @@ function dedupeByName(items) {
   try {
     const commandsPath = path.resolve(__dirname, "commands");
     if (!fs.existsSync(commandsPath)) {
-      console.error("❌ Không tìm thấy thư mục src/commands");
+      console.error("❌ Cannot find directory src/commands");
       process.exit(1);
     }
 
     const loaded = loadAllCommandJSON(commandsPath);
     if (!loaded.length) {
-      console.warn("⚠️ Không tìm thấy command nào để deploy.");
+      console.warn("⚠️ No commands found to deploy.");
     }
 
     const body = dedupeByName(loaded);
-    console.log(`ℹ️ ${body.length} command(s) sẽ được deploy sau khi loại trùng tên.`);
+    console.log(`ℹ️ ${body.length} command(s) will be deployed after deduplication.`);
 
     // Tuỳ chọn: xóa toàn bộ lệnh hiện tại trước khi ghi mới
     const clearAll = process.env.CLEAR_ALL === "1";

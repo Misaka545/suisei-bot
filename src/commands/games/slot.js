@@ -75,7 +75,7 @@ module.exports = {
         await interaction.editReply({ embeds: [embed] });
 
     } catch (err) {
-      console.error('Lỗi trong lệnh /slot:', err);
+      console.error('Error in /slot command:', err);
       await interaction.editReply('An error occurred while spinning the slot machine.');
     }
   }
