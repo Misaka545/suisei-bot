@@ -22,14 +22,15 @@ function getDanbooruAuth() {
  * @param {string} rating - 'general' | 'sensitive' | 'questionable' | 'explicit'
  * @returns {Promise<{url: string, character: string, tags: string, source: string, id: number} | null>}
  */
-async function getDanbooruImage(tags = '', rating = 'general', maxPage = 1000) {
+async function getDanbooruImage(tags = '', rating = 'general', maxPage = 100) {
   const searchTags = `${tags} rating:${rating}`.trim();
-  const MAX_RETRIES = 5;
+  const MAX_RETRIES = 3;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      // Random page để tránh order:random timeout
-      const randomPage = Math.floor(Math.random() * maxPage) + 1;
+      // Use lower page range on later attempts if early attempts find nothing
+      const currentMaxPage = attempt === 0 ? maxPage : Math.min(maxPage, 10);
+      const randomPage = Math.floor(Math.random() * currentMaxPage) + 1;
       const params = {
         tags: searchTags,
         limit: 20,
@@ -37,7 +38,7 @@ async function getDanbooruImage(tags = '', rating = 'general', maxPage = 1000) {
         ...getDanbooruAuth()
       };
 
-      const res = await axios.get(`${DANBOORU_BASE}/posts.json`, { params });
+      const res = await axios.get(`${DANBOORU_BASE}/posts.json`, { params, timeout: 10000 });
       const posts = res.data;
 
       if (!posts || posts.length === 0) continue; // Retry với page khác
@@ -61,7 +62,6 @@ async function getDanbooruImage(tags = '', rating = 'general', maxPage = 1000) {
         id: post.id
       };
     } catch (error) {
-      // Nếu 500/timeout, retry với page khác
       if (error.response?.status === 500 && attempt < MAX_RETRIES - 1) {
         console.warn(`[Danbooru] Retry ${attempt + 1}/${MAX_RETRIES} for tags: ${searchTags}`);
         continue;
@@ -122,7 +122,7 @@ async function getNSFWImage(isGif = false) {
  */
 async function getGifImage(category) {
   try {
-    const res = await axios.get(`https://nekos.best/api/v2/${category}`);
+    const res = await axios.get(`https://nekos.best/api/v2/${category}`, { timeout: 10000 });
     const first = res.data.results && res.data.results[0];
     if (!first) return null; // Trả về null nếu API không tìm thấy kết quả
     return {
@@ -136,7 +136,7 @@ async function getGifImage(category) {
 }
 
 async function getMemeImage() {
-  const res = await axios.get('https://meme-api.com/gimme');
+  const res = await axios.get('https://meme-api.com/gimme', { timeout: 10000 });
   return {
     url: res.data.url,
     title: res.data.title,
@@ -156,7 +156,7 @@ const JIKAN_BASE = 'https://api.jikan.moe/v4';
  * @returns {Promise<Object>} Thông tin anime
  */
 async function getRandomAnimeInfo() {
-  const res = await axios.get(`${JIKAN_BASE}/random/anime`);
+  const res = await axios.get(`${JIKAN_BASE}/random/anime`, { timeout: 10000 });
   const anime = res.data.data;
   if (!anime) return null;
 
@@ -188,7 +188,7 @@ async function getRandomAnimeInfo() {
  * @returns {Promise<Object>} Thông tin manga
  */
 async function getRandomMangaInfo() {
-  const res = await axios.get(`${JIKAN_BASE}/random/manga`);
+  const res = await axios.get(`${JIKAN_BASE}/random/manga`, { timeout: 10000 });
   const manga = res.data.data;
   if (!manga) return null;
 

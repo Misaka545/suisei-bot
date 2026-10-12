@@ -9,7 +9,7 @@ const MAX_ENQUEUE = 25;
 async function extractYouTubePlaylist(url, max = MAX_ENQUEUE) {
   const { ytdlp } = require("../../utils/youtubeHelpers");
   const out = await ytdlp(url, {
-    dumpSingleJson: true, flatPlaylist: true, playlistEnd: max, skipDownload: true, noWarnings: true, quiet: true, jsRuntimes: "node"
+    dumpSingleJson: true, flatPlaylist: true, playlistEnd: max, skipDownload: true, noWarnings: true, quiet: true, jsRuntimes: "node", remoteComponents: "ejs:github"
   });
   const data = typeof out === "string" ? JSON.parse(out) : out;
   const entries = Array.isArray(data?.entries) ? data.entries : [];
@@ -41,6 +41,10 @@ async function spotifyTrackToQuery(spotifyTrackUrl) {
   const meta = await fetchJson(`https://open.spotify.com/oembed?url=${encodeURIComponent(spotifyTrackUrl)}`);
   if (!meta?.title) throw new Error("Spotify oEmbed returned no title");
   const q = meta.title.replace(/\s*[—·]\s*/g, " - ").trim();
+  if (trackQueryCache.size > 500) {
+    const firstKey = trackQueryCache.keys().next().value;
+    trackQueryCache.delete(firstKey);
+  }
   trackQueryCache.set(spotifyTrackUrl, q);
   return q;
 }
@@ -137,11 +141,11 @@ module.exports = {
       // push to queue & maybe start
       const state = ensureMusic(guildId);
       for (const it of itemsToAdd) state.queue.push(it);
-      const { proc, resource } = require("../../utils/youtubeHelpers").makeYtdlpResource;
 
-      if (st.player.state.status !== require("../../utils/musicState").AudioPlayerStatus.Playing) {
+      const isPlayingOrPaused = [AudioPlayerStatus.Playing, AudioPlayerStatus.Paused].includes(st.player?.state?.status);
+
+      if (!isPlayingOrPaused && state.queue.length > 0) {
         // start first
-        const { makeYtdlpResource } = require("../../utils/youtubeHelpers");
         const next = state.queue.shift();
         const { proc, resource } = makeYtdlpResource(next.input);
         resource.metadata = { title: next.title || next.input, url: next.input };

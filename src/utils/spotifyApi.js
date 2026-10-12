@@ -21,7 +21,13 @@ function httpsJson(fullUrl, headers = {}, method = "GET", body = null) {
   });
 }
 
+let cachedToken = null;
+let tokenExpiresAt = 0;
+
 async function getSpotifyToken() {
+  if (cachedToken && Date.now() < tokenExpiresAt) {
+    return cachedToken;
+  }
   const id = process.env.SPOTIFY_CLIENT_ID, secret = process.env.SPOTIFY_CLIENT_SECRET;
   if (!id || !secret) throw new Error("Missing SPOTIFY_CLIENT_ID/SECRET in .env");
   const basic = Buffer.from(`${id}:${secret}`).toString("base64");
@@ -36,7 +42,10 @@ async function getSpotifyToken() {
     form
   );
   if (!json?.access_token) throw new Error("Could not obtain Spotify access token");
-  return json.access_token;
+  cachedToken = json.access_token;
+  const expiresInMs = (json.expires_in || 3600) * 1000 - 60000;
+  tokenExpiresAt = Date.now() + Math.max(expiresInMs, 60000);
+  return cachedToken;
 }
 
 async function spotifyApiGet(url, token) {

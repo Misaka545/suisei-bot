@@ -1,5 +1,4 @@
 // src/services/ttsService.js
-// TTS Service — VOICEVOX (Japanese) + Style-Bert-VITS2 (English)
 
 const {
   entersState,
@@ -8,34 +7,49 @@ const {
   AudioPlayerStatus,
 } = require("@discordjs/voice");
 const { ChannelType } = require("discord.js");
-const { synthesize: voicevoxSynthesize } = require("./voicevoxService");
-const { getSpeakerId } = require("../utils/voiceSettings");
+const { synthesize: voicevoxSynthesize, isAvailable: isVoicevoxAvailable } = require("./voicevoxService");
+const { toKatakanaForVoicevox, isPredominantlyLatin } = require("../utils/textToKatakana");
+const { getSpeakerId, getLanguage } = require("../utils/voiceSettings");
 const { connectIfNeeded, music } = require("../utils/musicState");
 
+const guildTtsPlayers = new Map();
 
-
-let _player = null;
-function getPlayer() {
-  if (_player) return _player;
-  _player = createAudioPlayer({
-    behaviors: { noSubscriber: NoSubscriberBehavior.Play },
-  });
-  _player.on("error", (err) =>
-    console.error("[AudioPlayer error]", err?.message || err)
-  );
-  return _player;
+function getPlayerForGuild(guildId) {
+  let player = guildTtsPlayers.get(guildId);
+  if (!player) {
+    player = createAudioPlayer({
+      behaviors: { noSubscriber: NoSubscriberBehavior.Play },
+    });
+    player.on("error", (err) =>
+      console.error(`[AudioPlayer error - ${guildId}]`, err?.message || err)
+    );
+    guildTtsPlayers.set(guildId, player);
+  }
+  return player;
 }
 
 /**
  * Generate a Discord AudioResource from text.
- * Routes to VOICEVOX.
  * @param {string} text - Text to speak
- * @param {string} [guildId] - Guild ID for per-guild speaker settings
+ * @param {string} [guildId] - Guild ID for per-guild speaker and language settings
  * @returns {Promise<import("@discordjs/voice").AudioResource>}
  */
 async function ttsResourceFromText(text, guildId) {
   const speakerId = guildId ? getSpeakerId(guildId) : getSpeakerId("default");
-  return voicevoxSynthesize(text, speakerId);
+
+  const voicevoxReady = await isVoicevoxAvailable();
+  if (!voicevoxReady) {
+    throw new Error("VOICEVOX engine is offline (http://127.0.0.1:50021). Please ensure VOICEVOX container is running.");
+  }
+
+  let textToSynthesize = text;
+
+  // If text is English / Latin, transcribe into Katakana so VOICEVOX pronounces it in character
+  if (isPredominantlyLatin(text)) {
+    textToSynthesize = await toKatakanaForVoicevox(text);
+  }
+
+  return voicevoxSynthesize(textToSynthesize, speakerId);
 }
 
 /**
@@ -69,7 +83,7 @@ async function speakResourceToChannel(voiceChannel, resource) {
     musicPlayer.pause();
   }
 
-  const ttsPlayer = getPlayer();
+  const ttsPlayer = getPlayerForGuild(guildId);
   connection.subscribe(ttsPlayer);
   ttsPlayer.play(resource);
 
@@ -79,7 +93,7 @@ async function speakResourceToChannel(voiceChannel, resource) {
   });
 
   // Resume music if it was playing
-  if (wasPlayingMusic && connection) {
+  if (wasPlayingMusic && st.connection && musicPlayer) {
     connection.subscribe(musicPlayer);
     musicPlayer.unpause();
   }

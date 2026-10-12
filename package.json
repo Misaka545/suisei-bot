@@ -10,9 +10,15 @@
   },
   "scripts": {
     "start": "node src/index.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop suisei-bot",
+    "pm2:restart": "pm2 restart suisei-bot",
+    "pm2:logs": "pm2 logs suisei-bot",
+    "pm2:save": "pm2 save",
     "deploy": "node src/deploy-commands.js",
     "build": "bash render-build.sh",
     "postinstall": "node -e \"(async()=>{try{const y=require('yt-dlp-exec'); if(y.exec){await y.exec('--version')} else {await y('--version')} console.log('yt-dlp ready')}catch(e){console.log('yt-dlp warmup skipped:', e?.message||e)}})()\"",
+    "update:ytdlp": "node -e \"require('./src/utils/youtubeHelpers').autoUpdateYtdlp()\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

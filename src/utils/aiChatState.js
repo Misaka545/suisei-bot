@@ -4,10 +4,11 @@ const { canCallGemini, recordGeminiCall, remainingCalls } = require("./geminiRat
 const { ollamaChat, isOllamaAvailable, OLLAMA_MODEL } = require("../services/ollamaService");
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+const DEFAULT_GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
 const chatSessions = new Map(); // Map<channelId, { persona, memory, model, history[] }>
 const MAX_HISTORY_PAIRS = 8;
+const MAX_SESSIONS = 200;
 
 function defaultPersona() {
   return "You are Suisei, a playful yet helpful anime-styled assistant in a Discord server. Speak concisely (<=120 words unless asked), use a friendly tone, and support English or Vietnamese depending on the user's message. Avoid overstepping.";
@@ -16,6 +17,10 @@ function defaultPersona() {
 function ensureChat(channelId) {
   let s = chatSessions.get(channelId);
   if (!s) {
+    if (chatSessions.size >= MAX_SESSIONS) {
+      const oldestKey = chatSessions.keys().next().value;
+      chatSessions.delete(oldestKey);
+    }
     s = {
       persona: defaultPersona(),
       memory: [],

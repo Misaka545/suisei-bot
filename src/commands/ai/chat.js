@@ -24,7 +24,7 @@ module.exports = {
 
     await interaction.deferReply({ ...ephemeralOpt(isPrivate) });
 
-    const session = ensureChat(interaction.channelId, process.env.GEMINI_MODEL || "gemini-2.5-flash");
+    const session = ensureChat(interaction.channelId);
     let reply = "";
 
     try {

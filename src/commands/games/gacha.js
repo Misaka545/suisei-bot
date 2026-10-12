@@ -134,6 +134,17 @@ function performPull(userId, bannerKey) {
     }
 }
 
+const gachaImageCache = new Map();
+
+async function getCachedImage(filePath) {
+    if (gachaImageCache.has(filePath)) {
+        return gachaImageCache.get(filePath);
+    }
+    const img = await loadImage(filePath);
+    gachaImageCache.set(filePath, img);
+    return img;
+}
+
 async function createGachaResultImage(results, raritiesConfig) {
     // --- Define layout properties ---
     const imageWidth = 140;      // Width of the item image
@@ -149,8 +160,8 @@ async function createGachaResultImage(results, raritiesConfig) {
     const canvas = createCanvas(canvasWidth, canvasHeight);
     const ctx = canvas.getContext('2d');
 
-    // --- Load the new background asset ---
-    const backgroundImage = await loadImage(path.join(uiImageDir, 'background_new.png'));
+    // --- Load the background asset ---
+    const backgroundImage = await getCachedImage(path.join(uiImageDir, 'background_new.png'));
     ctx.drawImage(backgroundImage, 0, 0, canvasWidth, canvasHeight);
     
     for (let i = 0; i < results.length; i++) {
@@ -168,8 +179,7 @@ async function createGachaResultImage(results, raritiesConfig) {
         try {
             if (!item.image) throw new Error('Missing image filename');
             const imagePath = path.join(gachaImageDir, item.image);
-            const imageBuffer = fs.readFileSync(imagePath);
-            const itemImage = await loadImage(imageBuffer);
+            const itemImage = await getCachedImage(imagePath);
             ctx.drawImage(itemImage, x, y, imageWidth, imageHeight);
         } catch (err) {
             console.warn(`Could not load local image for ${item.name} (${item.image}): ${err.message}.`);

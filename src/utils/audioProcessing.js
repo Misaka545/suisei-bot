@@ -4,32 +4,25 @@ const fs = require("fs");   // fs module is useful for checking if a path exists
 
 // --- Start of FFmpeg Path Configuration ---
 // This is the crucial part that was missing or incorrect.
-let _ffmpegPath = process.env.FFMPEG_PATH || 'ffmpeg'; // Default to 'ffmpeg' assuming it's in PATH, allow override
-// On Windows, if FFmpeg is in your system's PATH, 'ffmpeg' is usually enough.
-// If you want to specify a full path (e.g., if ffmpeg.exe is in a specific folder
-// and not in your PATH), you would set process.env.FFMPEG_PATH or hardcode it here.
-// Example for a specific path:
-// let _ffmpegPath = 'C:\\ffmpeg\\bin\\ffmpeg.exe'; // <-- Adjust this if needed
+let staticFfmpeg = null;
+try {
+  staticFfmpeg = require("ffmpeg-static");
+} catch {}
 
-// You can add more robust checks here if 'ffmpeg' alone doesn't work.
-// For now, given 'ffmpeg -version' works, we'll rely on the system PATH.
+let _ffmpegPath = process.env.FFMPEG_PATH || staticFfmpeg || 'ffmpeg';
 console.log(`[FFmpeg] Using command: ${_ffmpegPath}`);
 
 function getFfmpegPath() {
-  // Add a check to confirm existence
-  if (_ffmpegPath === 'ffmpeg') {
-    // If we're relying on 'ffmpeg' being in PATH, we can't use fs.existsSync directly
-    // to validate 'ffmpeg' itself, only if _ffmpegPath was an absolute path.
-    // For simplicity, we'll return 'ffmpeg' and let spawn handle ENOENT if not found.
-    return 'ffmpeg';
-  } else {
-    // If FFMPEG_PATH is set to an explicit path (e.g., /usr/bin/ffmpeg or /app/bin/ffmpeg)
-    if (!fs.existsSync(_ffmpegPath)) {
-      console.error(`[FFmpeg] ERROR: Configured FFmpeg path does not exist: ${_ffmpegPath}`);
-      return null;
+  if (process.env.FFMPEG_PATH) {
+    if (fs.existsSync(process.env.FFMPEG_PATH)) {
+      return process.env.FFMPEG_PATH;
     }
-    return _ffmpegPath;
+    console.error(`[FFmpeg] ERROR: Configured FFMPEG_PATH does not exist: ${process.env.FFMPEG_PATH}`);
   }
+  if (staticFfmpeg && fs.existsSync(staticFfmpeg)) {
+    return staticFfmpeg;
+  }
+  return 'ffmpeg';
 }
 // --- End of FFmpeg Path Configuration ---
 
@@ -71,4 +64,38 @@ function makeOpusDecoderMono48k() {
   return decoder;
 }
 
-module.exports = { pcmToWav48kMono, makeOpusDecoderMono48k, getFfmpegPath }; // Export the new function
+const { Readable } = require("stream");
+const { spawn } = require("child_process");
+
+/**
+ * Convert WAV buffer to PCM stream (48kHz stereo) for Discord voice playback.
+ * @param {Buffer} wavBuffer
+ * @returns {import("stream").Readable}
+ */
+function wavToPcmStream(wavBuffer) {
+  const ffmpeg = getFfmpegPath();
+  if (!ffmpeg) throw new Error("FFmpeg not found");
+
+  const ff = spawn(ffmpeg, [
+    "-i", "pipe:0",
+    "-f", "s16le",
+    "-ar", "48000",
+    "-ac", "2",
+    "pipe:1",
+  ], { stdio: ["pipe", "pipe", "ignore"], windowsHide: true });
+
+  const readable = Readable.from(wavBuffer);
+  readable.pipe(ff.stdin);
+
+  ff.stdin.on("error", () => {});
+  ff.on("error", (err) => {
+    console.error("[FFmpeg process error]", err.message);
+  });
+  ff.stdout.on("error", (err) => {
+    console.warn("[FFmpeg stdout error]", err.message);
+  });
+
+  return ff.stdout;
+}
+
+module.exports = { pcmToWav48kMono, makeOpusDecoderMono48k, getFfmpegPath, wavToPcmStream };

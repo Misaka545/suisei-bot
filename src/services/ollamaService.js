@@ -28,6 +28,7 @@ async function ollamaChat(systemPrompt, history, userMsg) {
   const res = await (await fetch)(`${OLLAMA_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(30000),
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       messages,
@@ -70,7 +71,10 @@ async function ollamaTranscribe(wavBuffer) {
  */
 async function isOllamaAvailable() {
   try {
-    const res = await (await fetch)(`${OLLAMA_BASE}/api/tags`, { method: "GET" });
+    const res = await (await fetch)(`${OLLAMA_BASE}/api/tags`, {
+      method: "GET",
+      signal: AbortSignal.timeout(3000),
+    });
     return res.ok;
   } catch {
     return false;

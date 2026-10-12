@@ -6,11 +6,11 @@ module.exports = {
     .setName("model").setDescription("Choose/view the Gemini model")
     .addSubcommand((sc) =>
       sc.setName("set").setDescription("Set model name")
-        .addStringOption((opt) => opt.setName("name").setDescription("e.g. gemini-2.5-flash").setRequired(true)))
+        .addStringOption((opt) => opt.setName("name").setDescription("e.g. gemini-3.5-flash-lite").setRequired(true)))
     .addSubcommand((sc) => sc.setName("view").setDescription("View current model")),
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
-    const s = ensureChat(interaction.channelId, process.env.GEMINI_MODEL || "gemini-2.5-flash");
+    const s = ensureChat(interaction.channelId);
     if (sub === "set") {
       const name = interaction.options.getString("name");
       s.model = name;

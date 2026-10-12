@@ -4,8 +4,7 @@ Suisei is a feature-rich, AI-powered Discord bot built with Discord.js and Googl
 
 ## Features
 
-*   **Natural Conversations (Wake Word):** Simply start your message with `Suisei` or `Suisei,` or reply to her to get her attention! She remembers conversation context and has a lively, configurable persona.
-*   **Voice Chatbot (VOICEVOX TTS):** When you're in a voice channel and chat with Suisei, she'll automatically speak her responses using VOICEVOX — a high-quality Japanese text-to-speech engine. Choose from 20+ different voices with `/voice`.
+*   **VOICEVOX Anime Voice TTS:** When you're in a voice channel and chat with Suisei, she speaks her responses aloud using the high-quality **VOICEVOX** engine! Both Japanese and English responses are rendered in her authentic anime character voice (with automatic English-to-Katakana phonetic transcription). Choose from 20+ VOICEVOX characters with `/voice`.
 *   **Contextual Awareness:** If you reply to another user's message and ask Suisei a question (e.g., "Suisei, what does this mean?"), she will read the original message to understand the context.
 *   **Automated TL;DRs:** Missed a long conversation? Type `suisei summarize` or `suisei tldr` to have her read up to the last 100 messages and provide a concise summary of what you missed.
 *   **Live Code Execution:** Suisei functions as an interactive development environment! Use `suisei run` or `suisei execute` followed by a markdown code block to instantly compile and run code directly in Discord. 
@@ -23,7 +22,7 @@ Suisei is a feature-rich, AI-powered Discord bot built with Discord.js and Googl
 2.  **Docker & Docker Compose** (required for the local Piston code execution engine and VOICEVOX TTS engine).
 3.  **Discord Bot Token** from the [Discord Developer Portal](https://discord.com/developers/applications).
     *   *Required Intents:* `Message Content Intent`, `Server Members Intent`, and `Guild Messages`.
-4.  **Google Gemini API Key** from Google AI Studio (Recommended model: `gemini-3.5-flash`).
+4.  **Google Gemini API Key** from Google AI Studio (Recommended model: `gemini-3.5-flash-lite`).
 5.  **FFmpeg** installed and available in your system PATH (required for audio processing).
 
 ### Installation

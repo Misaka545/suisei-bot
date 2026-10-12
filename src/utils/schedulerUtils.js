@@ -31,9 +31,19 @@ function saveTask(task) {
 }
 
 function removeTask(taskId) {
-    let tasks = getAllTasks();
-    tasks = tasks.filter(t => t.id !== taskId);
-    fs.writeFileSync(FILE_PATH, JSON.stringify(tasks, null, 2), 'utf-8');
+    removeTasks([taskId]);
 }
 
-module.exports = { getAllTasks, saveTask, removeTask };
+function removeTasks(taskIds) {
+    if (!taskIds || taskIds.length === 0) return;
+    const idSet = new Set(taskIds);
+    try {
+        let tasks = getAllTasks();
+        tasks = tasks.filter(t => !idSet.has(t.id));
+        fs.writeFileSync(FILE_PATH, JSON.stringify(tasks, null, 2), 'utf-8');
+    } catch (err) {
+        console.error('Lỗi ghi file schedule:', err);
+    }
+}
+
+module.exports = { getAllTasks, saveTask, removeTask, removeTasks };

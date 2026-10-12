@@ -31,6 +31,8 @@ const languageMap = {
     dart: "dart"
 };
 
+const PISTON_BASE = process.env.PISTON_URL || "http://127.0.0.1:2000";
+
 /**
  * Execute a snippet of code using the Piston API
  * @param {string} lang The language alias (e.g. 'js', 'python')
@@ -40,7 +42,7 @@ async function executeCode(lang, code) {
     const mappedLang = languageMap[lang.toLowerCase()] || lang.toLowerCase();
 
     try {
-        const response = await axios.post("http://127.0.0.1:2000/api/v2/execute", {
+        const response = await axios.post(`${PISTON_BASE}/api/v2/execute`, {
             language: mappedLang,
             version: "*", // Use latest available
             files: [
@@ -49,7 +51,7 @@ async function executeCode(lang, code) {
                     content: code
                 }
             ]
-        });
+        }, { timeout: 15000 });
 
         return {
             success: true,

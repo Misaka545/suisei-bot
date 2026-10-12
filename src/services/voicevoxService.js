@@ -101,6 +101,12 @@ function wavToPcmStream(wavBuffer) {
   readable.pipe(ff.stdin);
 
   ff.stdin.on("error", () => {}); // Ignore EPIPE if ffmpeg closes early
+  ff.on("error", (err) => {
+    console.error("[VOICEVOX FFmpeg process error]", err.message);
+  });
+  ff.stdout.on("error", (err) => {
+    console.warn("[VOICEVOX FFmpeg stdout error]", err.message);
+  });
 
   return ff.stdout;
 }
@@ -119,9 +125,8 @@ async function synthesize(text, speakerId = 3) {
   // Step 1: Create audio query
   const audioQuery = await createAudioQuery(text, speakerId);
 
-  // Optional: adjust speed/pitch here by modifying audioQuery
-  // audioQuery.speedScale = 1.1;
-  // audioQuery.pitchScale = 0.0;
+  // Subtle speed scale (1.05) for bright, responsive VTuber speech
+  audioQuery.speedScale = 1.05;
 
   // Step 2: Synthesize WAV
   const wavBuffer = await synthesisFromQuery(audioQuery, speakerId);

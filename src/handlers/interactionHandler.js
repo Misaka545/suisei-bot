@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const { handleButtonInteraction, captureCrash } = require("../services/errorReportService");
+
 async function loadInteractions(client) {
   client.commands = new Map();
 
@@ -22,6 +24,18 @@ async function loadInteractions(client) {
   }
 
   client.on("interactionCreate", async (interaction) => {
+    // Handle error alert buttons (Details & Dismiss)
+    if (interaction.isButton()) {
+      if (interaction.customId.startsWith("alert_") || interaction.customId.startsWith("autofix_")) {
+        try {
+          return await handleButtonInteraction(interaction);
+        } catch (btnErr) {
+          console.error("[Alert Button Error]:", btnErr);
+        }
+      }
+      return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
     const cmd = client.commands.get(interaction.commandName);
     if (!cmd) return;
@@ -29,11 +43,22 @@ async function loadInteractions(client) {
       await cmd.execute(interaction, client);
     } catch (err) {
       console.error(`Command ${interaction.commandName} failed:`, err);
+
+      // Capture crash and send alert with Auto-Fix button
+      captureCrash({
+        error: err,
+        origin: `Command /${interaction.commandName}`,
+        channel: interaction.channel,
+        interaction,
+        client,
+      }).catch(() => {});
+
+      const { MessageFlags } = require("discord.js");
       const msg = "❌ Command error.";
       if (interaction.deferred || interaction.replied) {
-        await interaction.followUp({ content: msg, ephemeral: true }).catch(() => {});
+        await interaction.followUp({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
       } else {
-        await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+        await interaction.reply({ content: msg, flags: MessageFlags.Ephemeral }).catch(() => {});
       }
     }
   });

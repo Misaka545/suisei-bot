@@ -31,50 +31,66 @@ async function connectIfNeeded(interaction, voiceChannel, { selfDeaf = true } = 
   const guildId = interaction.guild.id;
   const st = ensureMusic(guildId);
 
-  const needNew =
+  const isDead =
     !st.connection ||
     [VoiceConnectionStatus.Destroyed, VoiceConnectionStatus.Disconnected].includes(
       st.connection.state?.status
     );
+
+  const channelChanged = st.connection && st.connection.joinConfig.channelId !== voiceChannel.id;
   const wrongDeaf = st.connection && st.connection.joinConfig.selfDeaf !== selfDeaf;
 
-  if (needNew || wrongDeaf) {
+  if (isDead) {
     try { st.connection?.destroy?.(); } catch {}
-    st.connection = joinVoiceChannel({
+    const newConn = joinVoiceChannel({
       channelId: voiceChannel.id,
       guildId,
       adapterCreator: interaction.guild.voiceAdapterCreator,
       selfDeaf,
     });
-    st.player = createAudioPlayer({
-      behaviors: { noSubscriber: NoSubscriberBehavior.Pause },
-    });
+    st.connection = newConn;
+
+    if (!st.player) {
+      st.player = createAudioPlayer({
+        behaviors: { noSubscriber: NoSubscriberBehavior.Pause },
+      });
+    }
     st.connection.subscribe(st.player);
 
-    st.connection.on(VoiceConnectionStatus.Disconnected, async () => {
+    newConn.on(VoiceConnectionStatus.Disconnected, async () => {
       try {
         await Promise.race([
-          entersState(st.connection, VoiceConnectionStatus.Connecting, 5_000),
-          entersState(st.connection, VoiceConnectionStatus.Ready, 5_000),
+          entersState(newConn, VoiceConnectionStatus.Connecting, 5_000),
+          entersState(newConn, VoiceConnectionStatus.Ready, 5_000),
         ]);
       } catch {
-        try { st.connection.destroy(); } catch {}
-        st.connection = null;
-        st.player = null;
+        try { newConn.destroy(); } catch {}
+        if (st.connection === newConn) {
+          st.connection = null;
+        }
       }
     });
 
-    st.connection.on(VoiceConnectionStatus.Destroyed, () => {
-      st.connection = null;
-      st.player = null;
-      st.queue = [];
-      st.currentProc = null;
-      st.currentTrack = null;
-      st.skipping = false;
+    newConn.on(VoiceConnectionStatus.Destroyed, () => {
+      if (st.connection === newConn) {
+        st.connection = null;
+        st.player = null;
+        st.queue = [];
+        st.currentProc = null;
+        st.currentTrack = null;
+        st.skipping = false;
+      }
     });
 
-    st.connection.on("error", (err) => {
+    newConn.on("error", (err) => {
       console.warn("[VoiceConnection] Unhandled connection error:", err.message);
+    });
+  } else if (channelChanged || wrongDeaf) {
+    joinVoiceChannel({
+      channelId: voiceChannel.id,
+      guildId,
+      adapterCreator: interaction.guild.voiceAdapterCreator,
+      selfDeaf,
     });
   }
 

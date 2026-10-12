@@ -12,7 +12,7 @@ module.exports = {
     .addSubcommand((sc) => sc.setName("reset").setDescription("Reset persona to default")),
   async execute(interaction) {
     const sub = interaction.options.getSubcommand();
-    const s = ensureChat(interaction.channelId, process.env.GEMINI_MODEL || "gemini-2.5-flash");
+    const s = ensureChat(interaction.channelId);
     if (sub === "set") {
       const prompt = interaction.options.getString("prompt");
       s.persona = prompt;

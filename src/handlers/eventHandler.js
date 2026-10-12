@@ -32,8 +32,11 @@ async function registerCoreEvents(client) {
       }
 
       // Check for moderation commands (ban / timeout)
-      const lowerInput = userInput.toLowerCase();
       if (lowerInput.startsWith("ban ") || lowerInput.startsWith("timeout ")) {
+        if (!message.guild) {
+          return message.channel.send("Moderation commands can only be used in a server.");
+        }
+
         const isBan = lowerInput.startsWith("ban ");
         const targetUser = message.mentions.users.first();
 
@@ -47,12 +50,15 @@ async function registerCoreEvents(client) {
         }
 
         // Check author permissions (Admin only)
-        if (!message.member.permissions.has("Administrator")) {
+        if (!message.member?.permissions?.has("Administrator")) {
           return message.channel.send(`You must be an Administrator to use the ${isBan ? "ban" : "timeout"} command.`);
         }
 
         // Check bot permissions
-        const botMember = message.guild.members.cache.get(message.client.user.id) || await message.guild.members.fetch(message.client.user.id);
+        const botMember = message.guild.members.cache.get(message.client.user.id) || await message.guild.members.fetch(message.client.user.id).catch(() => null);
+        if (!botMember) {
+          return message.channel.send("Could not verify bot permissions.");
+        }
         if (isBan && !botMember.permissions.has("BanMembers")) {
           return message.channel.send("I do not have permission to ban members!");
         }
@@ -75,23 +81,23 @@ async function registerCoreEvents(client) {
         }
       }
 
-      // Check for 'run' or 'execute'
-      if (/^(?:run|execute)(?:\s+|$)/.test(lowerInput)) {
-        // Find discord code block: ```lang\ncode\n```, handling \r\n and optional languages
-        const codeBlockRegex = /```([a-z0-9+#\-\.]+)?\r?\n([\s\S]*?)```/i;
-        const match = lowerInput.match(codeBlockRegex);
+      // Check for 'run' or 'execute' code block execution
+      const codeBlockRegex = /```([a-z0-9+#\-\.]+)?\r?\n([\s\S]*?)```/i;
+      const isCodeCommand = /^(?:run|execute)(?:\s+|$)/i.test(userInput);
+      const hasCodeBlock = codeBlockRegex.test(message.content);
 
-        if (match && match.length === 3) {
-          const lang = match[1];
+      if (isCodeCommand && hasCodeBlock) {
+        const originalMatch = message.content.match(codeBlockRegex);
+
+        if (originalMatch && originalMatch.length === 3) {
+          const lang = (originalMatch[1] || "").trim();
           if (!lang) {
             return message.channel.send("Please specify a language next to the backticks! Example:\n\\`\\`\\`js\nconsole.log('hi');\n\\`\\`\\`");
           }
 
-          // We need the original casing for the code itself
-          const originalMatch = message.content.match(/```([a-z0-9+#\-\.]+)?\r?\n([\s\S]*?)```/i);
-          const code = originalMatch ? originalMatch[2] : match[2];
+          const code = originalMatch[2];
 
-          await message.channel.sendTyping();
+          await message.channel.sendTyping().catch(() => {});
           const { executeCode } = require("../utils/pistonApi");
           const result = await executeCode(lang, code);
 
@@ -112,13 +118,11 @@ async function registerCoreEvents(client) {
           }
 
           return message.channel.send(outputMsg);
-        } else {
-          return message.channel.send("To run code, please provide a formatted code block! Example:\n\\`\\`\\`js\nconsole.log('hi');\n\\`\\`\\`");
         }
       }
 
       if (lowerInput === "summarize" || lowerInput === "tldr" || lowerInput.startsWith("summarize ") || lowerInput.startsWith("tldr ")) {
-        await message.channel.sendTyping();
+        await message.channel.sendTyping().catch(() => {});
         try {
           const messages = await message.channel.messages.fetch({ limit: 100 });
           const msgArray = Array.from(messages.values()).reverse();
@@ -133,7 +137,7 @@ async function registerCoreEvents(client) {
           const aiPrompt = `Here is a transcript of the latest messages in this channel:\n\n${transcript}\n\nBased on these messages, please provide a concise 'TL;DR' summary of the recent conversations and what people are talking about. Include interesting highlights.`;
 
           const session = ensureChat(message.channel.id);
-          const replyText = await aiGenerate(session, aiPrompt, message.guild.id);
+          const replyText = await aiGenerate(session, aiPrompt, message.guild?.id);
           return message.channel.send(replyText);
         } catch (err) {
           console.error("Summary error:", err);
@@ -141,7 +145,7 @@ async function registerCoreEvents(client) {
         }
       }
 
-      await message.channel.sendTyping();
+      await message.channel.sendTyping().catch(() => {});
 
       try {
         let aiInput = userInput;
@@ -160,7 +164,7 @@ async function registerCoreEvents(client) {
         }
 
         const session = ensureChat(message.channel.id);
-        const replyText = await aiGenerate(session, aiInput, message.guild.id);
+        const replyText = await aiGenerate(session, aiInput, message.guild?.id);
         
         const chunks = chunkText(replyText);
         for (const chunk of chunks) {
@@ -168,19 +172,28 @@ async function registerCoreEvents(client) {
         }
 
         // Auto-TTS: if user is in a voice channel, speak the response
-        try {
-          const member = await message.guild.members.fetch(message.author.id).catch(() => null);
-          const voiceChannel = member?.voice?.channel;
-          if (voiceChannel) {
-            speakTextToChannel(voiceChannel, replyText, message.guild.id).catch(err =>
-              console.warn("[AutoTTS] Failed:", err.message)
-            );
+        if (message.guild) {
+          try {
+            const member = await message.guild.members.fetch(message.author.id).catch(() => null);
+            const voiceChannel = member?.voice?.channel;
+            if (voiceChannel) {
+              speakTextToChannel(voiceChannel, replyText, message.guild.id).catch(err =>
+                console.warn("[AutoTTS] Failed:", err.message)
+              );
+            }
+          } catch (autoTtsErr) {
+            console.warn("[AutoTTS] Error checking voice state:", autoTtsErr.message);
           }
-        } catch (autoTtsErr) {
-          console.warn("[AutoTTS] Error checking voice state:", autoTtsErr.message);
         }
       } catch (error) {
         console.error("AI Generation Error:", error);
+        const { captureCrash } = require("../services/errorReportService");
+        captureCrash({
+          error,
+          origin: "MessageCreate AI Event",
+          channel: message.channel,
+          client,
+        }).catch(() => {});
         await message.channel.send("Sorry, I encountered an error while thinking!");
       }
     }

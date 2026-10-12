@@ -13,7 +13,7 @@ module.exports = {
         user.history = [];
         user.pity = { character_featured: 0, weapon_featured: 0, character_standard: 0, weapon_standard: 0 };
         user.pity_4 = { character_featured: 0, weapon_featured: 0, character_standard: 0, weapon_standard: 0 };
-        user.guarantee = { character_featured: false };
+        user.guarantee = { character_featured: false, weapon_featured: true };
 
         await interaction.reply({ 
             content: "🧹 Your gacha history, pity, and guarantees have been successfully cleared.",

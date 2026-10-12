@@ -28,6 +28,8 @@ function loadSettings() {
 // Save settings to disk
 function saveSettings() {
   try {
+    const dir = path.dirname(SETTINGS_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const obj = Object.fromEntries(guildSettings);
     fs.writeFileSync(SETTINGS_PATH, JSON.stringify(obj, null, 2), "utf-8");
   } catch (e) {
@@ -62,6 +64,7 @@ function setSpeakerId(guildId, speakerId) {
 
 const SUPPORTED_LANGUAGES = {
   auto: "Auto-detect (respond in the user's language)",
+  vi: "Tiếng Việt",
   en: "English",
   ja: "日本語 (Japanese)",
 };

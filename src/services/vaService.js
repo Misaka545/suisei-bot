@@ -33,13 +33,24 @@ function startListening(connection, voiceChannel) {
     const stream = connection.receiver.subscribe(userId, {
       end: {
         behavior: EndBehaviorType.AfterSilence,
-        duration: 1500,
+        duration: 600,
       },
     });
 
     const opusDecoder = makeOpusDecoderMono48k();
     const pcmChunks = [];
     let durationBytes = 0;
+
+    stream.on("error", (err) => {
+      console.warn(`[VA stream error - ${userId}]`, err.message);
+      activeListeners.delete(userId);
+      try { opusDecoder.destroy(); } catch {}
+    });
+
+    opusDecoder.on("error", (err) => {
+      console.warn(`[VA opus error - ${userId}]`, err.message);
+      activeListeners.delete(userId);
+    });
 
     stream.pipe(opusDecoder);
 
@@ -50,9 +61,10 @@ function startListening(connection, voiceChannel) {
 
     stream.on("end", async () => {
       activeListeners.delete(userId);
+      try { opusDecoder.destroy(); } catch {}
       if (!va.active) return;
 
-      if (durationBytes < 48000) return;
+      if (durationBytes < 32000) return;
 
       if (va.processing) return;
       va.processing = true;
@@ -82,9 +94,14 @@ function startListening(connection, voiceChannel) {
 
         const session = ensureChat(voiceChannel.id);
         
-        const aiPrompt = `(Voice Context - Respond naturally and concisely as if speaking out loud) ${text}`;
+        const aiPrompt = `(Voice Context: Speak aloud naturally in lively, expressive, conversational anime Japanese as Hoshimachi Suisei! Keep your response very concise — 1 to 2 short sentences, under 25 words. Do not use markdown or emojis.) ${text}`;
         
         const replyText = await aiGenerate(session, aiPrompt, guildId);
+
+        if (voiceChannel.isTextBased?.()) {
+          voiceChannel.send(`☄️ **Suisei:** ${replyText}`).catch(() => {});
+        }
+
         await speakTextToChannel(voiceChannel, replyText, guildId);
 
       } catch (err) {

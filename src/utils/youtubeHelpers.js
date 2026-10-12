@@ -6,52 +6,83 @@ const fs = require("fs");
 const path = require("path");
 
 // --- CẤU HÌNH ĐƯỜNG DẪN ---
-// Tìm file yt-dlp.exe trong thư mục bin (cách thư mục utils 2 cấp)
-const localBinPathWindows = path.resolve(__dirname, '..', '..', 'bin', 'yt-dlp.exe');
-const localBinPathLinux = path.resolve(__dirname, '..', '..', 'yt-dlp');
+const candidatePaths = [
+  path.resolve(__dirname, '..', '..', 'bin', 'yt-dlp.exe'),
+  'C:\\Python314\\Scripts\\yt-dlp.exe',
+  path.resolve(__dirname, '..', '..', 'yt-dlp'),
+];
 
-// Xác định trình thực thi:
 let ytdlp = YtDlpWrap;
 let usingLocal = 'Global/NPM';
 
-if (fs.existsSync(localBinPathWindows)) {
-  ytdlp = YtDlpWrap.create(localBinPathWindows);
-  usingLocal = localBinPathWindows;
-} else if (fs.existsSync(localBinPathLinux)) {
-  ytdlp = YtDlpWrap.create(localBinPathLinux);
-  usingLocal = localBinPathLinux;
+for (const p of candidatePaths) {
+  if (fs.existsSync(p)) {
+    ytdlp = YtDlpWrap.create(p);
+    usingLocal = p;
+    break;
+  }
 }
 
 console.log(`[yt-dlp] Using binary at: ${usingLocal}`);
 
-const YTDLP_HEADERS = ["User-Agent: Mozilla/5.0", "Accept-Language: en-US,en;q=0.9"];
-const YTDLP_RATE = "2M";
-const PREFETCH_MS = 6000;
-const PREFETCH_BYTES = 2 * 1024 * 1024;
+const { execFile } = require("child_process");
+
+let isUpdating = false;
+function autoUpdateYtdlp() {
+  if (isUpdating) return;
+  isUpdating = true;
+
+  const binary = usingLocal.endsWith(".exe") ? usingLocal : (process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp");
+  console.log(`[yt-dlp] Checking for updates using: ${binary}...`);
+
+  execFile(binary, ["-U"], { windowsHide: true }, (err, stdout, stderr) => {
+    isUpdating = false;
+    if (err) {
+      console.warn("[yt-dlp auto-update error]", err.message);
+      return;
+    }
+    const msg = (stdout || stderr || "").trim().split("\n")[0];
+    if (msg) console.log(`[yt-dlp auto-update] ${msg}`);
+  });
+}
+
+// Run update check in background 5s after startup
+setTimeout(autoUpdateYtdlp, 5000);
+
+const PREFETCH_MS = 4000;
+const PREFETCH_BYTES = 1 * 1024 * 1024;
 const RESOURCE_HWM = 1 << 25;
 
 function makeYtdlpResource(input) {
-  // Cấu hình chung
+  // Cấu hình chung cho streaming YouTube
   const flags = {
     output: "-",
     quiet: true,
     format: "bestaudio[ext=webm][acodec=opus]/bestaudio/best",
-    addHeader: YTDLP_HEADERS,
-    httpChunkSize: "10M", // Sửa lại cú pháp camelCase cho yt-dlp-exec object
     forceIpv4: true,
-    limitRate: YTDLP_RATE,
-    retries: 3,
-    fragmentRetries: 3,
+    retries: 5,
+    fragmentRetries: 5,
+    noWarnings: true,
     jsRuntimes: "node",
+    remoteComponents: "ejs:github",
   };
 
   // Gọi process (hỗ trợ cả dạng exec function lẫn wrapped object)
   const proc = ytdlp.exec ? ytdlp.exec(input, flags) : ytdlp(input, flags);
 
+  proc.on?.("error", (err) => {
+    console.error("[yt-dlp process error]", err.message);
+  });
+
   proc.stderr?.on("data", (d) => {
     const s = d.toString().trim();
-    // Lọc bớt log rác, chỉ hiện lỗi quan trọng
-    if (s && (s.includes('Error') || s.includes('WARNING'))) console.log(`[yt-dlp] ${s}`);
+    if (s && (s.includes('Error') || s.includes('WARNING'))) {
+      console.log(`[yt-dlp] ${s}`);
+      // Auto-update if yt-dlp reports outdated or 403 error
+      if (s.includes('403') || s.includes('older than')) {
+        autoUpdateYtdlp();
+      }
+    }
   });
 
   const out = proc.stdout;
@@ -70,7 +101,6 @@ function makeYtdlpResource(input) {
   }
 
   out.on("error", (e) => {
-    // Xử lý lỗi pipe vỡ (thường xảy ra khi skip bài) để không crash bot
     if (e.code !== 'ERR_STREAM_DESTROYED') console.error('[yt-dlp stream error]', e.message);
     pt.destroy(e);
   });
@@ -96,4 +126,4 @@ function makeYtdlpResource(input) {
   return { proc, resource };
 }
 
-module.exports = { makeYtdlpResource, ytdlp };
+module.exports = { makeYtdlpResource, ytdlp, autoUpdateYtdlp };
