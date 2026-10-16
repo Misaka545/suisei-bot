@@ -48,7 +48,7 @@ module.exports = {
           { name: '🏢 Studio', value: anime.studios, inline: true },
           { name: '📅 Aired', value: anime.aired, inline: true }
         )
-        .setFooter({ text: `Source: MyAnimeList • ${anime.rating}${seasonYear ? ' • ' + seasonYear : ''}` });
+        .setFooter({ text: `Source: ${anime.source || 'MyAnimeList'} • ${anime.rating}${seasonYear ? ' • ' + seasonYear : ''}` });
 
       if (anime.image) {
         embed.setThumbnail(anime.image);

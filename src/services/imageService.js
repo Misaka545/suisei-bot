@@ -146,17 +146,102 @@ async function getMemeImage() {
 }
 
 // ============================================================
-// Jikan API (MyAnimeList) — Anime & Manga
+// Anime & Manga API (AniList GraphQL with Jikan Fallback)
 // ============================================================
 
+const ANILIST_BASE = 'https://graphql.anilist.co';
 const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
+function cleanSynopsis(raw) {
+  if (!raw) return 'No description available.';
+  const cleaned = raw
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?[^>]+(>|$)/g, '')
+    .trim();
+  return cleaned.length > 800 ? cleaned.substring(0, 800) + '...' : cleaned;
+}
+
 /**
- * Lấy thông tin random anime từ MyAnimeList qua Jikan API.
- * @returns {Promise<Object>} Thông tin anime
+ * Fetch random anime from AniList.
+ * @returns {Promise<Object>}
  */
 async function getRandomAnimeInfo() {
-  const res = await axios.get(`${JIKAN_BASE}/random/anime`, { timeout: 10000 });
+  // Try AniList GraphQL 
+  try {
+    const randomPage = Math.floor(Math.random() * 500) + 1;
+    const query = `
+      query ($page: Int) {
+        Page(page: $page, perPage: 1) {
+          media(type: ANIME, sort: SCORE_DESC) {
+            id
+            idMal
+            title { romaji english native }
+            description(asHtml: false)
+            siteUrl
+            coverImage { extraLarge large }
+            format
+            episodes
+            status
+            averageScore
+            popularity
+            genres
+            season
+            seasonYear
+            studios(isMain: true) { nodes { name } }
+            startDate { year month day }
+            isAdult
+          }
+        }
+      }
+    `;
+
+    const res = await axios.post(ANILIST_BASE, {
+      query,
+      variables: { page: randomPage }
+    }, {
+      timeout: 8000,
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+    });
+
+    const anime = res.data?.data?.Page?.media?.[0];
+    if (anime) {
+      const year = anime.seasonYear || anime.startDate?.year || '';
+      const airedStr = anime.startDate?.year
+        ? `${anime.startDate.year}-${String(anime.startDate.month || 1).padStart(2, '0')}-${String(anime.startDate.day || 1).padStart(2, '0')}`
+        : 'N/A';
+
+      return {
+        mal_id: anime.idMal || anime.id,
+        title: anime.title?.romaji || anime.title?.english || anime.title?.native || 'Unknown',
+        title_japanese: anime.title?.native || '',
+        title_english: anime.title?.english || '',
+        url: anime.idMal ? `https://myanimelist.net/anime/${anime.idMal}` : anime.siteUrl,
+        image: anime.coverImage?.extraLarge || anime.coverImage?.large || null,
+        synopsis: cleanSynopsis(anime.description),
+        type: anime.format || 'N/A',
+        episodes: anime.episodes || 'N/A',
+        status: anime.status ? anime.status.replace(/_/g, ' ') : 'N/A',
+        score: anime.averageScore ? (anime.averageScore / 10).toFixed(1) : 'N/A',
+        rank: 'N/A',
+        popularity: anime.popularity ? anime.popularity.toLocaleString() : 'N/A',
+        genres: anime.genres?.join(', ') || 'N/A',
+        studios: anime.studios?.nodes?.map(s => s.name).filter(Boolean).join(', ') || 'N/A',
+        season: anime.season ? anime.season.toLowerCase() : '',
+        year: year ? String(year) : '',
+        rating: anime.isAdult ? 'R+ (18+)' : 'PG-13',
+        aired: airedStr,
+        source: 'AniList / MyAnimeList'
+      };
+    }
+  } catch (aniErr) {
+    console.warn('[Anime] AniList request failed, trying Jikan fallback:', aniErr.message);
+  }
+
+  // Fallback to Jikan API
+  const res = await axios.get(`${JIKAN_BASE}/random/anime`, {
+    timeout: 5000,
+    headers: { 'User-Agent': 'SuiseiBot/1.0.0 (DiscordBot)' }
+  });
   const anime = res.data.data;
   if (!anime) return null;
 
@@ -179,16 +264,88 @@ async function getRandomAnimeInfo() {
     season: anime.season || '',
     year: anime.year || '',
     rating: anime.rating || 'N/A',
-    aired: anime.aired?.string || 'N/A'
+    aired: anime.aired?.string || 'N/A',
+    source: 'MyAnimeList'
   };
 }
 
 /**
- * Lấy thông tin random manga từ MyAnimeList qua Jikan API.
- * @returns {Promise<Object>} Thông tin manga
+ * Fetch random manga from AniList.
+ * @returns {Promise<Object>}
  */
 async function getRandomMangaInfo() {
-  const res = await axios.get(`${JIKAN_BASE}/random/manga`, { timeout: 10000 });
+  // Try AniList GraphQL
+  try {
+    const randomPage = Math.floor(Math.random() * 500) + 1;
+    const query = `
+      query ($page: Int) {
+        Page(page: $page, perPage: 1) {
+          media(type: MANGA, sort: SCORE_DESC) {
+            id
+            idMal
+            title { romaji english native }
+            description(asHtml: false)
+            siteUrl
+            coverImage { extraLarge large }
+            format
+            chapters
+            volumes
+            status
+            averageScore
+            popularity
+            genres
+            staff(sort: RELEVANCE) { nodes { name { full } } }
+            startDate { year month day }
+          }
+        }
+      }
+    `;
+
+    const res = await axios.post(ANILIST_BASE, {
+      query,
+      variables: { page: randomPage }
+    }, {
+      timeout: 8000,
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+    });
+
+    const manga = res.data?.data?.Page?.media?.[0];
+    if (manga) {
+      const publishedStr = manga.startDate?.year
+        ? `${manga.startDate.year}-${String(manga.startDate.month || 1).padStart(2, '0')}-${String(manga.startDate.day || 1).padStart(2, '0')}`
+        : 'N/A';
+
+      return {
+        mal_id: manga.idMal || manga.id,
+        title: manga.title?.romaji || manga.title?.english || manga.title?.native || 'Unknown',
+        title_japanese: manga.title?.native || '',
+        title_english: manga.title?.english || '',
+        url: manga.idMal ? `https://myanimelist.net/manga/${manga.idMal}` : manga.siteUrl,
+        image: manga.coverImage?.extraLarge || manga.coverImage?.large || null,
+        synopsis: cleanSynopsis(manga.description),
+        type: manga.format || 'N/A',
+        chapters: manga.chapters || 'N/A',
+        volumes: manga.volumes || 'N/A',
+        status: manga.status ? manga.status.replace(/_/g, ' ') : 'N/A',
+        score: manga.averageScore ? (manga.averageScore / 10).toFixed(1) : 'N/A',
+        rank: 'N/A',
+        popularity: manga.popularity ? manga.popularity.toLocaleString() : 'N/A',
+        genres: manga.genres?.join(', ') || 'N/A',
+        authors: manga.staff?.nodes?.map(a => a.name?.full).filter(Boolean).slice(0, 2).join(', ') || 'N/A',
+        serializations: 'N/A',
+        published: publishedStr,
+        source: 'AniList / MyAnimeList'
+      };
+    }
+  } catch (aniErr) {
+    console.warn('[Manga] AniList request failed, trying Jikan fallback:', aniErr.message);
+  }
+
+  // Fallback to Jikan API
+  const res = await axios.get(`${JIKAN_BASE}/random/manga`, {
+    timeout: 5000,
+    headers: { 'User-Agent': 'SuiseiBot/1.0.0 (DiscordBot)' }
+  });
   const manga = res.data.data;
   if (!manga) return null;
 
@@ -210,11 +367,11 @@ async function getRandomMangaInfo() {
     genres: manga.genres?.map(g => g.name).join(', ') || 'N/A',
     authors: manga.authors?.map(a => a.name).join(', ') || 'N/A',
     serializations: manga.serializations?.map(s => s.name).join(', ') || 'N/A',
-    published: manga.published?.string || 'N/A'
+    published: manga.published?.string || 'N/A',
+    source: 'MyAnimeList'
   };
 }
 
-// Export tất cả các hàm
 module.exports = {
   getDanbooruImage,
   getDanbooruImages,

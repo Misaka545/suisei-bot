@@ -45,7 +45,7 @@ module.exports = {
           { name: '📰 Serialization', value: manga.serializations, inline: true },
           { name: '📅 Published', value: manga.published, inline: true }
         )
-        .setFooter({ text: 'Source: MyAnimeList' });
+        .setFooter({ text: `Source: ${manga.source || 'MyAnimeList'}` });
 
       if (manga.image) {
         embed.setThumbnail(manga.image);
