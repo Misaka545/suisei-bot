@@ -2,6 +2,8 @@ require("dotenv").config();
 const { Client } = require("@xhayper/discord-rpc");
 const config = require("./config");
 
+const RECONNECT_INTERVAL_MS = 30 * 1000;
+
 let client = null;
 let currentTrackIndex = 0;
 let rotationTimer = null;
@@ -14,6 +16,14 @@ function formatLog(message) {
   return `[Bot RPC ${timestamp}] ${message}`;
 }
 
+function formatError(error) {
+  if (!error) return "Unknown error";
+  if (error.message && error.name && error.name !== "Error") {
+    return `${error.name}: ${error.message}`;
+  }
+  return error.message || error.name || String(error);
+}
+
 function getStartTimestamp() {
   if (config.timeMode === "local") {
     const today = new Date();
@@ -23,8 +33,52 @@ function getStartTimestamp() {
   return trackStartTime;
 }
 
+async function cleanupClient(targetClient) {
+  if (!targetClient) return;
+  try {
+    targetClient.removeAllListeners();
+    if (targetClient.transport) {
+      if (targetClient.transport.heartbeatTimer) {
+        clearInterval(targetClient.transport.heartbeatTimer);
+        targetClient.transport.heartbeatTimer = undefined;
+      }
+      if (targetClient.transport.timeoutTimer) {
+        clearTimeout(targetClient.transport.timeoutTimer);
+        targetClient.transport.timeoutTimer = undefined;
+      }
+      if (targetClient.transport.socket) {
+        targetClient.transport.socket.removeAllListeners();
+        targetClient.transport.socket.destroy();
+        targetClient.transport.socket = undefined;
+      }
+    }
+    await targetClient.destroy();
+  } catch (_) {}
+}
+
+function handleDisconnect(targetClient, reason = "") {
+  if (targetClient && client !== targetClient) return;
+  isConnecting = false;
+  stopRotation();
+
+  if (client) {
+    const deadClient = client;
+    client = null;
+    cleanupClient(deadClient);
+  }
+
+  const suffix = reason ? ` (${reason})` : "";
+  console.log(formatLog(`Disconnected from Discord${suffix}.`));
+  scheduleReconnect(RECONNECT_INTERVAL_MS);
+}
+
 async function setPresence(track) {
   if (!client || !client.user) return;
+
+  if (!client.isConnected) {
+    handleDisconnect(client, "NOT_CONNECTED");
+    return;
+  }
 
   try {
     const activity = {
@@ -40,7 +94,17 @@ async function setPresence(track) {
     await client.user.setActivity(activity);
     console.log(formatLog(`Presence active: "${track.details}" - ${track.state}`));
   } catch (error) {
-    console.error(formatLog(`Failed to set activity: ${error.message}`));
+    const errText = formatError(error);
+    console.error(formatLog(`Failed to set activity: ${errText}`));
+    if (
+      !client ||
+      !client.isConnected ||
+      error?.name === "NOT_CONNECTED" ||
+      error?.name === "CONNECTION_ENDED" ||
+      error?.name === "REQUEST_TIMEOUT"
+    ) {
+      handleDisconnect(client, errText);
+    }
   }
 }
 
@@ -70,7 +134,7 @@ function stopRotation() {
   }
 }
 
-function scheduleReconnect(delayMs = 15000) {
+function scheduleReconnect(delayMs = RECONNECT_INTERVAL_MS) {
   if (reconnectTimer || isConnecting) return;
   stopRotation();
 
@@ -85,26 +149,29 @@ async function connectClient() {
   if (isConnecting) return;
   isConnecting = true;
 
+  if (client) {
+    const oldClient = client;
+    client = null;
+    await cleanupClient(oldClient);
+  }
+
+  const thisClient = new Client({
+    clientId: config.clientId,
+  });
+  client = thisClient;
+
   try {
-    if (client) {
-      const oldClient = client;
-      client = null;
-      oldClient.removeAllListeners();
-      try {
-        await oldClient.destroy();
-      } catch (_) {}
-    }
-
-    const thisClient = new Client({
-      clientId: config.clientId,
-    });
-    client = thisClient;
-
     thisClient.on("ready", async () => {
       if (client !== thisClient) return; // stale client
       isConnecting = false;
       console.log(formatLog(`Connected to Discord as user: ${thisClient.user?.username} (${thisClient.user?.tag || thisClient.user?.id})`));
-      
+      const socket = thisClient.transport?.socket;
+      if (socket) {
+        socket.once("close", () => handleDisconnect(thisClient, "IPC socket closed"));
+        socket.once("end", () => handleDisconnect(thisClient, "IPC socket ended"));
+        socket.on("error", (err) => handleDisconnect(thisClient, formatError(err)));
+      }
+
       trackStartTime = Date.now();
       const currentTrack = config.tracks[currentTrackIndex] || config.tracks[0];
       await setPresence(currentTrack);
@@ -112,17 +179,18 @@ async function connectClient() {
     });
 
     thisClient.on("disconnected", () => {
-      if (client !== thisClient) return; // stale client
-      isConnecting = false;
-      console.log(formatLog(`Disconnected from Discord.`));
-      scheduleReconnect(15000);
+      handleDisconnect(thisClient, "RPC disconnected");
     });
 
     await thisClient.login();
   } catch (error) {
     isConnecting = false;
-    console.error(formatLog(`Connection failed (Discord might be closed): ${error.message}`));
-    scheduleReconnect(15000);
+    if (client === thisClient) {
+      client = null;
+    }
+    await cleanupClient(thisClient);
+    console.error(formatLog(`Connection failed (Discord might be closed): ${formatError(error)}`));
+    scheduleReconnect(RECONNECT_INTERVAL_MS);
   }
 }
 
@@ -132,10 +200,14 @@ async function shutdown() {
   if (reconnectTimer) clearTimeout(reconnectTimer);
 
   if (client) {
+    const activeClient = client;
+    client = null;
     try {
-      await client.user?.clearActivity();
-      await client.destroy();
+      if (activeClient.isConnected) {
+        await activeClient.user?.clearActivity();
+      }
     } catch (_) {}
+    await cleanupClient(activeClient);
   }
   process.exit(0);
 }

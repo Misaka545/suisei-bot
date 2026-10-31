@@ -19,8 +19,8 @@ echo Saving PM2 state...
 call pm2 save
 
 echo.
-echo Bot is running in the background!
-echo To view logs, run: pm2 logs suisei-bot
-echo To stop the bot, run: pm2 stop suisei-bot
+echo Bot and RPC are running in the background!
+echo To view logs, run: pm2 logs
+echo To stop, run: pm2 stop ecosystem.config.js
 echo.
 pause
